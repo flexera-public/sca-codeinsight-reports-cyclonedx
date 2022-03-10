@@ -1,0 +1,7 @@
+venv
+.vscode
+*.log
+*.xml
+*.pyc
+*.html
+*.zip
