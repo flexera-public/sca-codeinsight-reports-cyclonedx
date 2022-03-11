@@ -9,8 +9,10 @@ File : report_data.py
 '''
 
 import logging
+import uuid
 
 import CodeInsight_RESTAPIs.project.get_child_projects
+import CodeInsight_RESTAPIs.project.get_project_inventory
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
     includeChildProjects = reportOptions["includeChildProjects"]  # True/False
 
     projectList = [] # List to hold parent/child details for report
-    projectData = {} # Create a dictionary containing the project level summary data using projectID as keys
+    inventoryData = {}  # Create a dictionary containing the inventory data using inventoryID as keys
 
     # Get the list of parent/child projects start at the base project
     projectHierarchy = CodeInsight_RESTAPIs.project.get_child_projects.get_child_projects_recursively(baseURL, projectID, authToken)
@@ -49,13 +51,48 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
         projectID = project["projectID"]
         projectName = project["projectName"]
 
+        projectInventory = CodeInsight_RESTAPIs.project.get_project_inventory.get_project_inventory_details_without_vulnerabilities(baseURL, projectID, authToken)
+        inventoryItems = projectInventory["inventoryItems"]
+
+        # Collect the required data for each inventory item
+        for inventoryItem in inventoryItems:
+            
+            inventoryType = inventoryItem["type"]
+
+            # This is not a component for move to the next item
+            if inventoryType != "Component":
+                continue
+
+            inventoryID = inventoryItem["id"]       
+            componentName = inventoryItem["componentName"]
+            componentVersionName = inventoryItem["componentVersionName"]
+            componentUrl = inventoryItem["componentUrl"]
+            selectedLicenseSPDXIdentifier = inventoryItem["selectedLicenseSPDXIdentifier"]
+            componentDescription = inventoryItem["description"][:100]
+
+            # Store the data for the inventory item for reporting
+            inventoryData[inventoryID] = {
+                "projectName" : projectName,
+                "componentName" : componentName,
+                "componentVersionName" : componentVersionName,
+                "componentUrl" : componentUrl,
+                "componentDescription" : componentDescription, 
+                "selectedLicenseSPDXIdentifier" : selectedLicenseSPDXIdentifier
+
+            }
+
+
+
+
 
     reportData = {}
     reportData["reportName"] = reportName
+    reportData["serialNumber"] = str(uuid.uuid1())
     reportData["projectName"] =  projectHierarchy["name"]
     reportData["projectID"] = projectHierarchy["id"]
     reportData["projectList"] = projectList
     reportData["reportVersion"] = reportVersion
+    reportData["inventoryData"] = inventoryData
 
 
     return reportData

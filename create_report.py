@@ -130,6 +130,7 @@ def main():
 
 		reportData["projectNameForFile"] = projectNameForFile
 		reportData["reportTimeStamp"] = datetime.strptime(fileNameTimeStamp, "%Y%m%d-%H%M%S").strftime("%B %d, %Y at %H:%M:%S")
+		reportData["reportUTCTimeStamp"] = datetime.strptime(fileNameTimeStamp, "%Y%m%d-%H%M%S").strftime("%Y-%m-%dT%H:%M.%SZ")
 		reportData["reportFileNameBase"] = reportFileNameBase
 
 		if "errorMsg" in reportData.keys():

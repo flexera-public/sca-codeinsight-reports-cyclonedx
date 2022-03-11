@@ -9,6 +9,8 @@ File : report_artifacts_xml.py
 '''
 
 import logging
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
 
 
 import _version
@@ -22,21 +24,78 @@ def generate_xml_report(reportData):
     
     projectName = reportData["projectName"]
     reportFileNameBase = reportData["reportFileNameBase"]
-
+    inventoryData = reportData["inventoryData"]
+    serialNumber = reportData["serialNumber"]
+    reportUTCTimeStamp = reportData["reportUTCTimeStamp"]
 
 
     xmlFile = reportFileNameBase + ".xml"
 
-    # Create cycloneDX xml file
-    try:
-        xml_ptr = open(xmlFile,"w")
-    except:
-        logger.error("Failed to open xmlfile %s:" %xmlFile)
-        raise
+    root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.4", serialNumber="urn:uuid: " + serialNumber, version="1")
 
-    xml_ptr.write("Project Name: %s" %projectName)
+    metadata = ET.SubElement(root, "metadata")
+    timestamp = ET.SubElement(metadata, "timestamp")
+    timestamp.text = reportUTCTimeStamp
+    
+    tools = ET.SubElement(metadata, "tools")
+    tool = ET.SubElement(tools, "tools")
 
-    xml_ptr.close() 
+    vendor = ET.SubElement(tool, "vendor")
+    vendor.text = "Revenera"
+    name = ET.SubElement(tool, "name")
+    name.text = "Code Insight"
+    version = ET.SubElement(tool, "version")
+    version.text = "2022 R1"
+
+    component = ET.SubElement(metadata, "component", type="application")
+    name= ET.SubElement(component, "name")
+    name.text = projectName
+    version = ET.SubElement(component, "version")
+    version.text = "0.0.0"
+    
+
+    inventoryComponents = ET.SubElement(root, "components")
+
+    for inventoryID in inventoryData:
+
+        componentName = inventoryData[inventoryID]["componentName"]
+        componentVersionName = inventoryData[inventoryID]["componentVersionName"]
+        componentDescription = inventoryData[inventoryID]["componentDescription"]
+        selectedLicenseSPDXIdentifier = inventoryData[inventoryID]["selectedLicenseSPDXIdentifier"]
+        componentUrl = inventoryData[inventoryID]["componentUrl"]
+
+        cycloneDXEntry = ET.SubElement(inventoryComponents, "component", type="library")
+        author = ET.SubElement(cycloneDXEntry, "author")
+        
+        componentNameValue = ET.SubElement(cycloneDXEntry, "name")
+        componentNameValue.text = componentName
+        
+        componentVersionValue = ET.SubElement(cycloneDXEntry, "version")      
+        componentVersionValue.text = componentVersionName
+
+        descriptionValue = ET.SubElement(cycloneDXEntry, "description")
+        descriptionValue.text = componentDescription
+
+        licenses = ET.SubElement(cycloneDXEntry, "licenses")
+
+        license = ET.SubElement(licenses, "license")
+        id = ET.SubElement(license, "id")
+        id.text = selectedLicenseSPDXIdentifier
+
+        externalReferences = ET.SubElement(cycloneDXEntry, "externalReferences")
+        reference = ET.SubElement(externalReferences, "reference", type="website")
+        url = ET.SubElement(reference, "url")
+        url.text = componentUrl
+
+        
+
+
+    xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent="   ")
+    with open(xmlFile, "w") as f:
+        f.write(xmlstr)
+
+
+   
 
     logger.info("    Exiting generate_html_report")
     return xmlFile
