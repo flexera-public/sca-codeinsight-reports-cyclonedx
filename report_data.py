@@ -13,6 +13,7 @@ import uuid
 
 import CodeInsight_RESTAPIs.project.get_child_projects
 import CodeInsight_RESTAPIs.project.get_project_inventory
+import purl
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,8 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
             selectedLicenseSPDXIdentifier = inventoryItem["selectedLicenseSPDXIdentifier"]
             componentDescription = inventoryItem["description"][:100]
 
+            purlString = purl.get_purl_string(inventoryItem, baseURL, authToken)
+
             # Store the data for the inventory item for reporting
             inventoryData[inventoryID] = {
                 "projectName" : projectName,
@@ -77,8 +80,8 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
                 "componentVersionName" : componentVersionName,
                 "componentUrl" : componentUrl,
                 "componentDescription" : componentDescription, 
-                "selectedLicenseSPDXIdentifier" : selectedLicenseSPDXIdentifier
-
+                "selectedLicenseSPDXIdentifier" : selectedLicenseSPDXIdentifier,
+                "purl" : purlString
             }
 
 

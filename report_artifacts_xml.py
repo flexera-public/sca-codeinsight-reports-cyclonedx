@@ -63,6 +63,7 @@ def generate_xml_report(reportData):
         componentDescription = inventoryData[inventoryID]["componentDescription"]
         selectedLicenseSPDXIdentifier = inventoryData[inventoryID]["selectedLicenseSPDXIdentifier"]
         componentUrl = inventoryData[inventoryID]["componentUrl"]
+        purl = inventoryData[inventoryID]["purl"]
 
         cycloneDXEntry = ET.SubElement(inventoryComponents, "component", type="library")
         author = ET.SubElement(cycloneDXEntry, "author")
@@ -75,6 +76,9 @@ def generate_xml_report(reportData):
 
         descriptionValue = ET.SubElement(cycloneDXEntry, "description")
         descriptionValue.text = componentDescription
+
+        purlValue = ET.SubElement(cycloneDXEntry, "purl")
+        purlValue.text = purl
 
         licenses = ET.SubElement(cycloneDXEntry, "licenses")
 
