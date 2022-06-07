@@ -22,11 +22,12 @@ logger = logging.getLogger(__name__)
 def generate_xml_report(reportData):
     logger.info("    Entering generate_html_report")
     
-    projectName = reportData["projectName"]
+
     reportFileNameBase = reportData["reportFileNameBase"]
     inventoryData = reportData["inventoryData"]
     serialNumber = reportData["serialNumber"]
     reportUTCTimeStamp = reportData["reportUTCTimeStamp"]
+    CodeInsightReleaseYear = reportData["CodeInsightReleaseYear"]
 
 
     applicationPublisher = reportData["applicationPublisher"]
@@ -45,12 +46,12 @@ def generate_xml_report(reportData):
     tools = ET.SubElement(metadata, "tools")
     tool = ET.SubElement(tools, "tool")
 
-    vendor = ET.SubElement(tool, "vendor")
-    vendor.text = "Revenera"
-    name = ET.SubElement(tool, "name")
-    name.text = "Code Insight"
-    version = ET.SubElement(tool, "version")
-    version.text = "2022 R2"
+    toolVendor = ET.SubElement(tool, "vendor")
+    toolVendor.text = "Revenera"
+    toolName = ET.SubElement(tool, "name")
+    toolName.text = "Code Insight"
+    toolVersion = ET.SubElement(tool, "version")
+    toolVersion.text = CodeInsightReleaseYear
 
     component = ET.SubElement(metadata, "component", type="application")
 
@@ -77,6 +78,7 @@ def generate_xml_report(reportData):
         purl = inventoryData[inventoryID]["purl"]
 
         cycloneDXEntry = ET.SubElement(inventoryComponents, "component", type="library")
+        cycloneDXEntry.set("bom-ref", purl)
         author = ET.SubElement(cycloneDXEntry, "author")
         
         componentNameValue = ET.SubElement(cycloneDXEntry, "name")

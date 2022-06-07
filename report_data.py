@@ -137,6 +137,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
     reportData["projectList"] = projectList
     reportData["reportVersion"] = reportVersion
     reportData["inventoryData"] = inventoryData
+    reportData["CodeInsightReleaseYear"] = "2022"
 
 
     return reportData
