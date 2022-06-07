@@ -19,15 +19,19 @@ logger = logging.getLogger(__name__)
 def get_purl_string(inventoryItem, baseURL, authToken):
     logger.info("entering get_purl_string")
 
+    purlString = "pkg:"  # Default value 
+
     forge = inventoryItem["componentForgeName"]
-    inventoryName = inventoryItem["name"]
     componentName = inventoryItem["componentName"]
     componentVersionName = inventoryItem["componentVersionName"]
 
     componentId = inventoryItem["componentId"]
+    inventoryItemName = inventoryItem["name"]
 
-    if forge in ["apache", "cargo", "nuget", "pypi", "rubygems", "sourceforge"]:
+    logger.info("    Forge: %s  Inventory Item: %s" %(forge, inventoryItemName))
 
+    # Create the purl based on the forge
+    if forge in ["apache", "crates", "nuget gallery", "pypi", "rubygems", "sourceforge"]:
 
         if forge == "rubygems":
             purlRepo = "gem"
@@ -42,8 +46,6 @@ def get_purl_string(inventoryItem, baseURL, authToken):
         purlVersion = componentVersionName
         purlNameSpace = ""
 
-        purlString = "pkg:" + purlRepo + "/" + purlName + "@" + purlVersion 
-
     elif forge in ["centos", "fedora-koji"]:
 
         purlRepo = "rpm"
@@ -54,8 +56,6 @@ def get_purl_string(inventoryItem, baseURL, authToken):
             purlNameSpace = forge
         else:
             purlNameSpace = "fedora"
-
-        purlString = "pkg:" + purlRepo + "/" + purlNameSpace +"/" + purlName + "@" + purlVersion 
 
     elif forge in ["clojars", "maven-google", "maven2-ibiblio"]:
 
@@ -73,22 +73,17 @@ def get_purl_string(inventoryItem, baseURL, authToken):
 
         purlNameSpace = componentTitle.split("/")[0] # parse groupId from component title (start of string to forward slash "/")
 
-        purlString = "pkg:" + purlRepo + "/" + purlNameSpace +"/" + purlName + "@" + purlVersion 
-
 
     elif forge in ["cpan", "cran", "hackage"]:
 
         purlRepo = forge
         purlNameSpace = ""
+        purlVersion = componentVersionName  
         
         # Get case sensitive name from component lookup
         componentDetails = CodeInsight_RESTAPIs.component.get_component_details.get_component_details_v3_summary(baseURL, componentId, authToken)
         componentTitle = componentDetails["data"]["title"]
         purlName = componentTitle.split(" - ")[0] # parse case-sensitive name from component title (start of string to dash "-" minus 1)
-
-        purlVersion = componentVersionName  
-
-        purlString = "pkg:" + purlRepo + "/" + purlName + "@" + purlVersion 
 
     elif forge in ["npm"]:
 
@@ -96,11 +91,7 @@ def get_purl_string(inventoryItem, baseURL, authToken):
         purlNameSpace = ""
         
         purlVersion = componentVersionName  
-        purlName = componentName
-   
-        #purlName = "TBD" # component name (replace "@" with "%40")
-
-        purlString = "pkg:" + purlRepo + "/" + purlName + "@" + purlVersion 
+        purlName = componentName.replace("@", "%40")
 
     elif forge in ["packagist"]:
 
@@ -114,9 +105,6 @@ def get_purl_string(inventoryItem, baseURL, authToken):
 
         purlVersion = componentVersionName  
 
-        purlString = "pkg:" + purlRepo + "/" + purlName + "@" + purlVersion 
-
-
     elif forge in ["github", "gitlab"]:
 
         purlRepo = forge
@@ -125,22 +113,28 @@ def get_purl_string(inventoryItem, baseURL, authToken):
         # Get case sensitive name from component lookup
         componentDetails = CodeInsight_RESTAPIs.component.get_component_details.get_component_details_v3_summary(baseURL, componentId, authToken)
         componentTitle = componentDetails["data"]["title"]
-
        
         componentName = componentTitle.split(" - ")[0] # parse case-sensitive name from component title (start of string to dash "-" minus 1)
 
         purlNameSpace, purlName  = componentName.split("/") # parse groupId from component title (start of string to forward slash "/")
-   
-        purlString = "pkg:" + purlRepo + "/" + purlNameSpace +"/" + purlName + "@" + purlVersion 
-
-    
-    elif forge in ["fsf-directory", "codeplex", "gnu", "java.net", "kernel.org", "mozilla", "mysqlab", "savannah"]:
+      
+    elif forge in ["fsf-directory", "codeplex", "gnu", "java.net", "kernel.org", "mozilla", "mysqlab", "savannah", "googlecode"]:
+        logger.warning("        No purl string for repository %s."  %forge)
         purlString = ""
 
     else:
         logger.error("        Unsupported forge")
-        
         purlString = ""
+
+
+    # Is there a value
+    if purlString != "":
+        if purlNameSpace == "":
+            purlString = "pkg:" + purlRepo + "/" + purlName + "@" + purlVersion 
+        else:
+            purlString = "pkg:" + purlRepo + "/" + purlNameSpace +"/" + purlName + "@" + purlVersion 
+
+    logger.info("        purlString: %s" %(purlString))
 
     return purlString
 
