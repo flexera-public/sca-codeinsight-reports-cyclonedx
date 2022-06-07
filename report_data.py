@@ -90,6 +90,14 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
             selectedLicenseUrl = inventoryItem["selectedLicenseUrl"]
             componentDescription = inventoryItem["description"][:100]
 
+            # Is there a specified component version?
+            if componentDescription == "N/A":
+                componentDescription = ""
+
+            # Is there a specified component version?
+            if componentVersionName == "N/A" or componentVersionName.lower() == "unknown":
+                componentVersionName = ""
+
             purlString = purl.get_purl_string(inventoryItem, baseURL, authToken)
 
             # Store the data for the inventory item for reporting
