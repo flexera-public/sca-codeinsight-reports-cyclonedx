@@ -29,6 +29,11 @@ def generate_xml_report(reportData):
     reportUTCTimeStamp = reportData["reportUTCTimeStamp"]
 
 
+    applicationPublisher = reportData["applicationPublisher"]
+    applicationName = reportData["applicationName"]
+    applicationVersion = reportData["applicationVersion"] 
+
+
     xmlFile = reportFileNameBase + ".xml"
 
     root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.4", serialNumber="urn:uuid: " + serialNumber, version="1")
@@ -38,20 +43,25 @@ def generate_xml_report(reportData):
     timestamp.text = reportUTCTimeStamp
     
     tools = ET.SubElement(metadata, "tools")
-    tool = ET.SubElement(tools, "tools")
+    tool = ET.SubElement(tools, "tool")
 
     vendor = ET.SubElement(tool, "vendor")
     vendor.text = "Revenera"
     name = ET.SubElement(tool, "name")
     name.text = "Code Insight"
     version = ET.SubElement(tool, "version")
-    version.text = "2022 R1"
+    version.text = "2022 R2"
 
     component = ET.SubElement(metadata, "component", type="application")
+
+    if applicationPublisher != "":
+        publisherName= ET.SubElement(component, "publisher")
+        publisherName.text = applicationPublisher
+
     name= ET.SubElement(component, "name")
-    name.text = projectName
+    name.text = applicationName
     version = ET.SubElement(component, "version")
-    version.text = "0.0.0"
+    version.text = applicationVersion
     
 
     inventoryComponents = ET.SubElement(root, "components")

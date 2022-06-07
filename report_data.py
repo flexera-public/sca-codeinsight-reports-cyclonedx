@@ -23,6 +23,24 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
 
     # Parse report options
     includeChildProjects = reportOptions["includeChildProjects"]  # True/False
+    
+    try:
+        applicationPublisher = reportOptions["applicationPublisher"]  
+    except:
+        logger.info("Application publisher was not provdied")
+        applicationPublisher = ""
+    
+    try:
+        applicationName = reportOptions["applicationName"] 
+    except:
+        logger.info("Application Name was not provdied")
+        applicationName = ""
+
+    try:
+        applicationVersion = reportOptions["applicationVersion"]  
+    except:
+        logger.info("Application Version was not provdied")
+        applicationVersion = ""
 
     projectList = [] # List to hold parent/child details for report
     inventoryData = {}  # Create a dictionary containing the inventory data using inventoryID as keys
@@ -86,10 +104,23 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
 
 
 
+    # Was an application name provided as an option or default to the project name
+    if applicationName == "":
+        applicationName = projectHierarchy["name"]
+    
+    # Was an application version provided as an option or default 0.0.0
+    if applicationVersion == "":
+        applicationVersion = "0.0.0"
+
 
 
     reportData = {}
     reportData["reportName"] = reportName
+
+    reportData["applicationPublisher"]  = applicationPublisher
+    reportData["applicationName"] = applicationName
+    reportData["applicationVersion"]  = applicationVersion
+
     reportData["serialNumber"] = str(uuid.uuid1())
     reportData["projectName"] =  projectHierarchy["name"]
     reportData["projectID"] = projectHierarchy["id"]
