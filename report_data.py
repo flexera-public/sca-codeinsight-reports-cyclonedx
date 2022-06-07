@@ -87,6 +87,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
             componentVersionName = inventoryItem["componentVersionName"]
             componentUrl = inventoryItem["componentUrl"]
             selectedLicenseSPDXIdentifier = inventoryItem["selectedLicenseSPDXIdentifier"]
+            selectedLicenseUrl = inventoryItem["selectedLicenseUrl"]
             componentDescription = inventoryItem["description"][:100]
 
             purlString = purl.get_purl_string(inventoryItem, baseURL, authToken)
@@ -99,6 +100,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
                 "componentUrl" : componentUrl,
                 "componentDescription" : componentDescription, 
                 "selectedLicenseSPDXIdentifier" : selectedLicenseSPDXIdentifier,
+                "selectedLicenseUrl" : selectedLicenseUrl,
                 "purl" : purlString
             }
 

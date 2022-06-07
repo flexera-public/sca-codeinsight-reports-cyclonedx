@@ -72,6 +72,7 @@ def generate_xml_report(reportData):
         componentVersionName = inventoryData[inventoryID]["componentVersionName"]
         componentDescription = inventoryData[inventoryID]["componentDescription"]
         selectedLicenseSPDXIdentifier = inventoryData[inventoryID]["selectedLicenseSPDXIdentifier"]
+        selectedLicenseUrl = inventoryData[inventoryID]["selectedLicenseUrl"]
         componentUrl = inventoryData[inventoryID]["componentUrl"]
         purl = inventoryData[inventoryID]["purl"]
 
@@ -95,6 +96,9 @@ def generate_xml_report(reportData):
         license = ET.SubElement(licenses, "license")
         id = ET.SubElement(license, "id")
         id.text = selectedLicenseSPDXIdentifier
+
+        licenseURL = ET.SubElement(license, "url")
+        licenseURL.text = selectedLicenseUrl
 
         externalReferences = ET.SubElement(cycloneDXEntry, "externalReferences")
         reference = ET.SubElement(externalReferences, "reference", type="website")
