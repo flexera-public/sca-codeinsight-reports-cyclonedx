@@ -26,12 +26,6 @@ def get_purl_string(inventoryItem, baseURL, authToken):
 
     componentId = inventoryItem["componentId"]
 
-
-    print("  Forge:  %s" %forge)
-    print("      Inv Name:  %s" %inventoryName)
-    print("      componentId:  %s" %componentId)
-
-
     if forge in ["apache", "cargo", "nuget", "pypi", "rubygems", "sourceforge"]:
 
 
@@ -103,10 +97,8 @@ def get_purl_string(inventoryItem, baseURL, authToken):
         
         purlVersion = componentVersionName  
         purlName = componentName
-
-        print(" *** %s" %purlName)
    
-        purlName = "TBD" # component name (replace "@" with "%40")
+        #purlName = "TBD" # component name (replace "@" with "%40")
 
         purlString = "pkg:" + purlRepo + "/" + purlName + "@" + purlVersion 
 
@@ -134,8 +126,7 @@ def get_purl_string(inventoryItem, baseURL, authToken):
         componentDetails = CodeInsight_RESTAPIs.component.get_component_details.get_component_details_v3_summary(baseURL, componentId, authToken)
         componentTitle = componentDetails["data"]["title"]
 
-        print("  ***  %s" %componentTitle)
-        
+       
         componentName = componentTitle.split(" - ")[0] # parse case-sensitive name from component title (start of string to dash "-" minus 1)
 
         purlNameSpace, purlName  = componentName.split("/") # parse groupId from component title (start of string to forward slash "/")
@@ -147,14 +138,9 @@ def get_purl_string(inventoryItem, baseURL, authToken):
         purlString = ""
 
     else:
-        print("        Unsupported forge")
+        logger.error("        Unsupported forge")
         
         purlString = ""
-
-
-    print("        purlString:  %s" %purlString)
-
-    print("")
 
     return purlString
 
