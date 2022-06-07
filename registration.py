@@ -80,7 +80,7 @@ reportOptions.append(reportOption)
 reportOption = {}
 reportOption["name"] = "applicationName"
 reportOption["label"] = "Application Name"
-reportOption["description"] = "What is the application name for the report.  If left black the Project Name will be used."
+reportOption["description"] = "What is the application name for the report.  If left blank the Project Name will be used."
 reportOption["type"] = "string"
 reportOption["defaultValue"] = ""
 reportOption["required"] = "false"
