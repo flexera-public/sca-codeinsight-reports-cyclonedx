@@ -13,6 +13,7 @@ import uuid
 
 import CodeInsight_RESTAPIs.project.get_child_projects
 import CodeInsight_RESTAPIs.project.get_project_inventory
+import CodeInsight_RESTAPIs.project.get_project_information
 import purl
 
 logger = logging.getLogger(__name__)
@@ -23,24 +24,6 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
 
     # Parse report options
     includeChildProjects = reportOptions["includeChildProjects"]  # True/False
-    
-    try:
-        applicationPublisher = reportOptions["applicationPublisher"]  
-    except:
-        logger.info("Application publisher was not provdied")
-        applicationPublisher = ""
-    
-    try:
-        applicationName = reportOptions["applicationName"] 
-    except:
-        logger.info("Application Name was not provdied")
-        applicationName = ""
-
-    try:
-        applicationVersion = reportOptions["applicationVersion"]  
-    except:
-        logger.info("Application Version was not provdied")
-        applicationVersion = ""
 
     projectList = [] # List to hold parent/child details for report
     inventoryData = {}  # Create a dictionary containing the inventory data using inventoryID as keys
@@ -48,6 +31,9 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
     # Get the list of parent/child projects start at the base project
     projectHierarchy = CodeInsight_RESTAPIs.project.get_child_projects.get_child_projects_recursively(baseURL, projectID, authToken)
     projectName = projectHierarchy["name"]
+
+    applicationDetails = determine_application_details(baseURL, projectName, projectID, authToken)
+
 
     # Create a list of project data sorted by the project name at each level for report display  
     # Add details for the parent node
@@ -113,23 +99,28 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
             }
 
 
-
-    # Was an application name provided as an option or default to the project name
-    if applicationName == "":
-        applicationName = projectHierarchy["name"]
     
-    # Was an application version provided as an option or default 0.0.0
-    if applicationVersion == "":
+    # Was an application name entered for the project
+    if applicationDetails["applicationName"] == "":
+        applicationName = projectHierarchy["name"]
+    else:
+        applicationName = applicationDetails["applicationName"]
+    
+    # Was an application version entered for the project
+    if applicationDetails["applicationVersion"] == "":
         applicationVersion = "0.0.0"
-
+    else:
+        applicationVersion = applicationDetails["applicationVersion"] 
 
 
     reportData = {}
     reportData["reportName"] = reportName
 
-    reportData["applicationPublisher"]  = applicationPublisher
     reportData["applicationName"] = applicationName
     reportData["applicationVersion"]  = applicationVersion
+    reportData["applicationVendor"]  = applicationDetails["applicationVendor"]
+    reportData["applicationReportName"]  = applicationDetails["applicationReportName"]
+
 
     reportData["serialNumber"] = str(uuid.uuid1())
     reportData["projectName"] =  projectHierarchy["name"]
@@ -164,3 +155,59 @@ def create_project_hierarchy(project, parentID, projectList, baseURL):
             create_project_hierarchy(childProject, childProject["id"], projectList, baseURL)
 
     return projectList
+
+#--------------------------------------------
+def determine_application_details(baseURL, projectName, projectID, authToken):
+    logger.debug("Entering determine_application_details.")
+    # Create a application name for the report if the custom fields are populated
+    # Default values
+    applicationName = projectName
+    applicationVersion = ""
+    applicationVendor = ""
+
+    projectInformation = CodeInsight_RESTAPIs.project.get_project_information.get_project_information_summary(baseURL, projectID, authToken)
+
+    # Project level custom fields added in 2022R1
+    if "customFields" in projectInformation:
+        customFields = projectInformation["customFields"]
+
+        # See if the custom project fields were propulated for this project
+        for customField in customFields:
+
+            # Is there the reqired custom field available?
+            if customField["fieldLabel"] == "Application Name":
+                if customField["value"]:
+                    applicationName = customField["value"]
+
+            # Is the custom version field available?
+            if customField["fieldLabel"] == "Application Version":
+                if customField["value"]:
+                    applicationVersion = customField["value"]     
+
+            # Is the custom version field available?
+            if customField["fieldLabel"] == "Application Vendor":
+                if customField["value"]:
+                    applicationVendor = customField["value"]    
+
+
+    # Join the custom values to create the application name for the report artifacts
+    if applicationName != projectName:
+        if applicationVersion != "":
+            applicationReportName = applicationName + " - " + applicationVersion
+        else:
+            applicationReportName = applicationName
+    else:
+        applicationReportName = projectName
+
+    
+    applicationDetails = {}
+    applicationDetails["applicationName"] = applicationName
+    applicationDetails["applicationVersion"] = applicationVersion
+    applicationDetails["applicationVendor"] = applicationVendor
+    applicationDetails["applicationReportName"] = applicationReportName
+
+    logger.info("    applicationDetails: %s" %applicationDetails)
+
+
+
+    return applicationDetails

@@ -77,37 +77,6 @@ reportOption["required"] = "true"
 reportOption["order"] = "1"
 reportOptions.append(reportOption)
 
-reportOption = {}
-reportOption["name"] = "applicationName"
-reportOption["label"] = "Application Name"
-reportOption["description"] = "What is the application name for the report.  If left blank the Project Name will be used."
-reportOption["type"] = "string"
-reportOption["defaultValue"] = ""
-reportOption["required"] = "false"
-reportOption["order"] = "2"
-reportOptions.append(reportOption)
-
-reportOption = {}
-reportOption["name"] = "applicationVersion"
-reportOption["label"] = "Application Version"
-reportOption["description"] = "Specify the application version.  If left blank 0.0.0 will be used"
-reportOption["type"] = "string"
-reportOption["defaultValue"] = ""
-reportOption["required"] = "false"
-reportOption["order"] = "3"
-reportOptions.append(reportOption)
-
-reportOption = {}
-reportOption["name"] = "applicationPublisher"
-reportOption["label"] = "Application Publisher"
-reportOption["description"] = "Specify the application publisher"
-reportOption["type"] = "string"
-reportOption["defaultValue"] = ""
-reportOption["required"] = "false"
-reportOption["order"] = "4"
-reportOptions.append(reportOption)
-
-  
 
 #####################################################################################################
 # Get the directory name in order to register the script

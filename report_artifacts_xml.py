@@ -30,7 +30,7 @@ def generate_xml_report(reportData):
     CodeInsightReleaseYear = reportData["CodeInsightReleaseYear"]
 
 
-    applicationPublisher = reportData["applicationPublisher"]
+    applicationVendor = reportData["applicationVendor"]
     applicationName = reportData["applicationName"]
     applicationVersion = reportData["applicationVersion"] 
 
@@ -55,9 +55,8 @@ def generate_xml_report(reportData):
 
     component = ET.SubElement(metadata, "component", type="application")
 
-    if applicationPublisher != "":
-        publisherName= ET.SubElement(component, "publisher")
-        publisherName.text = applicationPublisher
+    publisherName= ET.SubElement(component, "publisher")
+    publisherName.text = applicationVendor
 
     name= ET.SubElement(component, "name")
     name.text = applicationName
