@@ -133,6 +133,9 @@ def get_purl_string(inventoryItem, baseURL, authToken):
             purlString = "pkg:" + purlRepo + "/" + purlName + "@" + purlVersion 
         else:
             purlString = "pkg:" + purlRepo + "/" + purlNameSpace +"/" + purlName + "@" + purlVersion 
+        
+        if purlVersion == "N/A":
+            purlString = purlString[:-4]
 
     logger.info("        purlString: %s" %(purlString))
 
