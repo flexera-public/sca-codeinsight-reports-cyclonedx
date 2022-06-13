@@ -10,6 +10,7 @@ File : report_data.py
 
 import logging
 import uuid
+from collections import OrderedDict
 
 import CodeInsight_RESTAPIs.project.get_child_projects
 import CodeInsight_RESTAPIs.project.get_project_inventory
@@ -99,7 +100,11 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
             }
 
 
-    
+    # Sort the inventory data by Component Name / Component Version / Selected License Name
+    sortedInventoryData = OrderedDict(sorted(inventoryData.items(), key=lambda x: (x[1]['componentName'],  x[1]['componentVersionName'], x[1]['selectedLicenseSPDXIdentifier'])  ) )
+
+
+
     # Was an application name entered for the project
     if applicationDetails["applicationName"] == "":
         applicationName = projectHierarchy["name"]
@@ -118,7 +123,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
 
     reportData["applicationName"] = applicationName
     reportData["applicationVersion"]  = applicationVersion
-    reportData["applicationVendor"]  = applicationDetails["applicationVendor"]
+    reportData["applicationPublisher"]  = applicationDetails["applicationPublisher"]
     reportData["applicationReportName"]  = applicationDetails["applicationReportName"]
 
 
@@ -127,7 +132,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
     reportData["projectID"] = projectHierarchy["id"]
     reportData["projectList"] = projectList
     reportData["reportVersion"] = reportVersion
-    reportData["inventoryData"] = inventoryData
+    reportData["inventoryData"] = sortedInventoryData
     reportData["CodeInsightReleaseYear"] = "2022"
 
 
@@ -163,7 +168,7 @@ def determine_application_details(baseURL, projectName, projectID, authToken):
     # Default values
     applicationName = projectName
     applicationVersion = ""
-    applicationVendor = ""
+    applicationPublisher = ""
 
     projectInformation = CodeInsight_RESTAPIs.project.get_project_information.get_project_information_summary(baseURL, projectID, authToken)
 
@@ -185,9 +190,9 @@ def determine_application_details(baseURL, projectName, projectID, authToken):
                     applicationVersion = customField["value"]     
 
             # Is the custom version field available?
-            if customField["fieldLabel"] == "Application Vendor":
+            if customField["fieldLabel"] == "Application Publisher":
                 if customField["value"]:
-                    applicationVendor = customField["value"]    
+                    applicationPublisher = customField["value"]    
 
 
     # Join the custom values to create the application name for the report artifacts
@@ -203,7 +208,7 @@ def determine_application_details(baseURL, projectName, projectID, authToken):
     applicationDetails = {}
     applicationDetails["applicationName"] = applicationName
     applicationDetails["applicationVersion"] = applicationVersion
-    applicationDetails["applicationVendor"] = applicationVendor
+    applicationDetails["applicationPublisher"] = applicationPublisher
     applicationDetails["applicationReportName"] = applicationReportName
 
     logger.info("    applicationDetails: %s" %applicationDetails)
