@@ -10,6 +10,7 @@ The `sca-codeinsight-reports-cyclonedx` repository is a example report for Reven
 |Repository Tag | Minimum Code Insight Release  |
 |--|--|
 |1.0.x |2021R4  |
+|1.1.x |2022R1  |
 
 **Repository Cloning**
 
@@ -74,6 +75,13 @@ To update this report configuration:
 ## Usage
 
 This report is executed directly from within Revenera's Code Insight product. From the project reports tab of each Code Insight project it is possible to *generate* the **CycloneDX Report** via the Report Framework.
+
+The generated reports will utilize the following Project Custom Fields if available
+- Application Name
+- Application Version
+- Application Publisher
+
+The above values will be used in place of the **Project Name** for any project references within the generated artifacts to allow users the ability abstract the project name for the application SBOM report.
 
 
 **Report Options**
