@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.1.0] - 2022-06-09
+### Added
+- Support for project level custom fields
+- Add purls
+- Add license url
+
 ## [1.0.2] - 2022-05-18
 ### Added
 - Initial internal release of CycloneDX Report
