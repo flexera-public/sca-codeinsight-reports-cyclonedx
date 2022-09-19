@@ -1,6 +1,6 @@
-# sca-codeinsight-reports-spdx
+# This repo is the CycloneDX SBOM report for Code Insight.
 
-The `sca-codeinsight-reports-cyclonedx` repository is a example report for Revenera's Code Insight product. This report allows a user to generate an CycloneDX report representing the software bill of material (SBOM) for a given project. 
+The `sca-codeinsight-reports-cyclonedx` repository is a report for Revenera's Code Insight product. This report allows a user to generate an CycloneDX report representing the software bill of material (SBOM) for a given project. 
 
 ## Prerequisites
 
