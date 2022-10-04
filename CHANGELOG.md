@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2022-10-04
+### Fixed
+- Updates for validation passing
+- common requirements venv for all reports
 
 ## [1.1.0] - 2022-06-09
 ### Added
