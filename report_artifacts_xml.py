@@ -37,7 +37,7 @@ def generate_xml_report(reportData):
 
     xmlFile = reportFileNameBase + ".xml"
 
-    root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.4", serialNumber="urn:uuid: " + serialNumber, version="1")
+    root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.4", serialNumber="urn:uuid:" + serialNumber, version="1")
 
     metadata = ET.SubElement(root, "metadata")
     timestamp = ET.SubElement(metadata, "timestamp")
@@ -68,16 +68,19 @@ def generate_xml_report(reportData):
 
     for inventoryID in inventoryData:
 
+        bomref = inventoryData[inventoryID]["bomref"]
         componentName = inventoryData[inventoryID]["componentName"]
         componentVersionName = inventoryData[inventoryID]["componentVersionName"]
         componentDescription = inventoryData[inventoryID]["componentDescription"]
-        selectedLicenseSPDXIdentifier = inventoryData[inventoryID]["selectedLicenseSPDXIdentifier"]
-        selectedLicenseUrl = inventoryData[inventoryID]["selectedLicenseUrl"]
+        licenseDetails = inventoryData[inventoryID]["licenseDetails"]
         componentUrl = inventoryData[inventoryID]["componentUrl"]
         purl = inventoryData[inventoryID]["purl"]
 
         cycloneDXEntry = ET.SubElement(inventoryComponents, "component", type="library")
-        cycloneDXEntry.set("bom-ref", purl)
+        
+        if bomref != "":
+            cycloneDXEntry.set("bom-ref", bomref)
+        
         author = ET.SubElement(cycloneDXEntry, "author")
         
         componentNameValue = ET.SubElement(cycloneDXEntry, "name")
@@ -89,17 +92,29 @@ def generate_xml_report(reportData):
         descriptionValue = ET.SubElement(cycloneDXEntry, "description")
         descriptionValue.text = componentDescription
 
-        purlValue = ET.SubElement(cycloneDXEntry, "purl")
-        purlValue.text = purl
-
         licenses = ET.SubElement(cycloneDXEntry, "licenses")
 
-        license = ET.SubElement(licenses, "license")
-        id = ET.SubElement(license, "id")
-        id.text = selectedLicenseSPDXIdentifier
+        if licenseDetails["licenseObjectType"] == "expression":
 
-        licenseURL = ET.SubElement(license, "url")
-        licenseURL.text = selectedLicenseUrl
+            expression = ET.SubElement(licenses, "expression")
+            expression.text = licenseDetails["possibleLicenses"]
+
+        else:
+            license = ET.SubElement(licenses, "license")
+
+            if "SPDXID" in licenseDetails:
+                licenseID = ET.SubElement(license, "id")
+                licenseID.text = licenseDetails["SPDXID"]
+            else:
+
+                licenseName = ET.SubElement(license, "name")
+                licenseName.text = licenseDetails["licenseName"]
+
+            licenseURL = ET.SubElement(license, "url")
+            licenseURL.text = licenseDetails["licenseURL"]
+
+        purlValue = ET.SubElement(cycloneDXEntry, "purl")
+        purlValue.text = purl
 
         externalReferences = ET.SubElement(cycloneDXEntry, "externalReferences")
         reference = ET.SubElement(externalReferences, "reference", type="website")

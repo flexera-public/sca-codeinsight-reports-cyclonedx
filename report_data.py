@@ -16,6 +16,7 @@ import CodeInsight_RESTAPIs.project.get_child_projects
 import CodeInsight_RESTAPIs.project.get_project_inventory
 import CodeInsight_RESTAPIs.project.get_project_information
 import purl
+import SPDX_license_mappings # To map evidence to an SPDX license name
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +74,8 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
             componentName = inventoryItem["componentName"]
             componentVersionName = inventoryItem["componentVersionName"]
             componentUrl = inventoryItem["componentUrl"]
-            selectedLicenseSPDXIdentifier = inventoryItem["selectedLicenseSPDXIdentifier"]
-            selectedLicenseUrl = inventoryItem["selectedLicenseUrl"]
-            componentDescription = inventoryItem["description"][:100]
+
+            componentDescription = inventoryItem["description"][:100].replace("\n", " - ")
 
             # Is there a specified component version?
             if componentDescription == "N/A":
@@ -87,6 +87,41 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
 
             purlString = purl.get_purl_string(inventoryItem, baseURL, authToken)
 
+            if purlString != "":
+                bomref = purlString + "-" + str(inventoryID)
+            else:
+                bomref = ""
+
+            # Manage license details
+            licenseDetails  = {}
+
+            selectedLicenseSPDXIdentifier = inventoryItem["selectedLicenseSPDXIdentifier"]
+            selectedLicenseName = inventoryItem["selectedLicenseName"]
+            selectedLicenseUrl = inventoryItem["selectedLicenseUrl"]
+
+            if selectedLicenseName == "I don't know":
+                # Grab possible licenses since one was not selected
+                possibleLicensesOptions = inventoryItem["possibleLicenses"]
+                possibleLicenses = []
+                for license in possibleLicensesOptions:
+                    possibleLicenses.append(license["licenseName"])
+
+                licenseDetails["licenseObjectType"] = "expression" 
+                licenseDetails["possibleLicenses"] = ' OR '.join(possibleLicenses)
+
+            elif selectedLicenseSPDXIdentifier in SPDX_license_mappings.LICENSEMAPPINGS:
+                logger.info("        \"%s\" maps to SPDX ID \"%s\"" %(selectedLicenseSPDXIdentifier, SPDX_license_mappings.LICENSEMAPPINGS[selectedLicenseSPDXIdentifier]) )
+                licenseDetails["licenseObjectType"] = "license"
+                licenseDetails["SPDXID"] = selectedLicenseSPDXIdentifier
+                licenseDetails["licenseURL"] =  selectedLicenseUrl
+
+            else:
+                # There should be a valid SPDX ID here
+                licenseDetails["licenseObjectType"] = "license"
+                licenseDetails["licenseName"] = selectedLicenseName
+                licenseDetails["licenseURL"] =  selectedLicenseUrl
+
+
             # Store the data for the inventory item for reporting
             inventoryData[inventoryID] = {
                 "projectName" : projectName,
@@ -94,14 +129,14 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
                 "componentVersionName" : componentVersionName,
                 "componentUrl" : componentUrl,
                 "componentDescription" : componentDescription, 
-                "selectedLicenseSPDXIdentifier" : selectedLicenseSPDXIdentifier,
-                "selectedLicenseUrl" : selectedLicenseUrl,
-                "purl" : purlString
+                "licenseDetails" : licenseDetails,
+                "purl" : purlString,
+                "bomref" : bomref
             }
 
 
     # Sort the inventory data by Component Name / Component Version / Selected License Name
-    sortedInventoryData = OrderedDict(sorted(inventoryData.items(), key=lambda x: (x[1]['componentName'],  x[1]['componentVersionName'], x[1]['selectedLicenseSPDXIdentifier'])  ) )
+    sortedInventoryData = OrderedDict(sorted(inventoryData.items(), key=lambda x: (x[1]['componentName'],  x[1]['componentVersionName'])  ) )
 
 
 
