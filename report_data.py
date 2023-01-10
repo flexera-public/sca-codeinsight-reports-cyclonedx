@@ -85,7 +85,12 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
             if componentVersionName == "N/A" or componentVersionName.lower() == "unknown":
                 componentVersionName = ""
 
-            purlString = purl.get_purl_string(inventoryItem, baseURL, authToken)
+            # Attempt to generate a purl string for the component
+            try:
+                purlString = purl.get_purl_string(inventoryItem, baseURL, authToken)
+            except:
+                logger.warning("Unable to create purl string for inventory item.")
+                purlString = ""
 
             if purlString != "":
                 bomref = purlString + "-" + str(inventoryID)
