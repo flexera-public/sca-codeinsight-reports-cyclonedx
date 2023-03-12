@@ -25,7 +25,7 @@ def generate_cyclonedx_report(reportData):
     serialNumber = reportData["serialNumber"]
     bomVersion = reportData["bomVersion"]
     reportUTCTimeStamp = reportData["reportUTCTimeStamp"]
-    CodeInsightReleaseYear = reportData["CodeInsightReleaseYear"]
+    releaseDetails = reportData["releaseDetails"]
 
     applicationPublisher = reportData["applicationPublisher"]
     applicationName = reportData["applicationName"]
@@ -43,11 +43,11 @@ def generate_cyclonedx_report(reportData):
     tool = ET.SubElement(tools, "tool")
 
     toolVendor = ET.SubElement(tool, "vendor")
-    toolVendor.text = "Revenera"
+    toolVendor.text = releaseDetails["vendor"]
     toolName = ET.SubElement(tool, "name")
-    toolName.text = "Code Insight"
+    toolName.text = releaseDetails["tool"]
     toolVersion = ET.SubElement(tool, "version")
-    toolVersion.text = CodeInsightReleaseYear
+    toolVersion.text = releaseDetails["releaseYear"] + " " + releaseDetails["releaseVersion"]
 
     component = ET.SubElement(metadata, "component", type="application")
 

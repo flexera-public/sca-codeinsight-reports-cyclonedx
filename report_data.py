@@ -15,6 +15,7 @@ from collections import OrderedDict
 import CodeInsight_RESTAPIs.project.get_child_projects
 import CodeInsight_RESTAPIs.project.get_project_inventory
 import CodeInsight_RESTAPIs.project.get_project_information
+import CodeInsight_RESTAPIs.system.get_system_details
 import purl
 import SPDX_license_mappings # To map evidence to an SPDX license name
 
@@ -33,6 +34,8 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
 
     serialNumber = "urn:uuid:" + str(uuid.uuid1())
     bomVersion = "1"
+
+    releaseDetails = CodeInsight_RESTAPIs.system.get_system_details.get_release_information(baseURL)
 
     # Get the list of parent/child projects start at the base project
     projectHierarchy = CodeInsight_RESTAPIs.project.get_child_projects.get_child_projects_recursively(baseURL, projectID, authToken)
@@ -278,7 +281,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
     reportData["reportVersion"] = reportVersion
     reportData["inventoryData"] = sortedInventoryData
     reportData["vulnerabilityData"] = vulnerabilityData
-    reportData["CodeInsightReleaseYear"] = "2022"
+    reportData["releaseDetails"] = releaseDetails
 
     return reportData
 
