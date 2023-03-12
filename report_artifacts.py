@@ -21,10 +21,12 @@ def create_report_artifacts(reportData):
     # Dict to hold the complete list of reports
     reports = {}
 
-    xmlFile = report_artifacts_xml.generate_xml_report(reportData)
+    cyclonedxFile = report_artifacts_xml.generate_cyclonedx_report(reportData)
+    vdrFile = report_artifacts_xml.generate_vdr_report(reportData)
+    vexFile = report_artifacts_xml.generate_vex_report(reportData)
 
-    reports["viewable"] = xmlFile
-    reports["allFormats"] = [xmlFile]
+    reports["viewable"] = cyclonedxFile
+    reports["allFormats"] = [cyclonedxFile, vdrFile, vexFile]
 
     logger.info("Exiting create_report_artifacts")
     

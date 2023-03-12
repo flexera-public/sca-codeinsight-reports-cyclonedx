@@ -29,6 +29,10 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
 
     projectList = [] # List to hold parent/child details for report
     inventoryData = {}  # Create a dictionary containing the inventory data using inventoryID as keys
+    vulnerabilityData = {} # Create dictionary to hold all vulnerability data based on vul ID across all projects
+
+    serialNumber = "urn:uuid:" + str(uuid.uuid1())
+    bomVersion = "1"
 
     # Get the list of parent/child projects start at the base project
     projectHierarchy = CodeInsight_RESTAPIs.project.get_child_projects.get_child_projects_recursively(baseURL, projectID, authToken)
@@ -58,7 +62,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
         projectID = project["projectID"]
         projectName = project["projectName"]
 
-        projectInventory = CodeInsight_RESTAPIs.project.get_project_inventory.get_project_inventory_details_without_vulnerabilities(baseURL, projectID, authToken)
+        projectInventory = CodeInsight_RESTAPIs.project.get_project_inventory.get_project_inventory_details(baseURL, projectID, authToken)
         inventoryItems = projectInventory["inventoryItems"]
 
         # Collect the required data for each inventory item
@@ -70,7 +74,8 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
             if inventoryType != "Component":
                 continue
 
-            inventoryID = inventoryItem["id"]       
+            inventoryID = inventoryItem["id"]  
+            inventoryItemName = inventoryItem["name"]     
             componentName = inventoryItem["componentName"]
             componentVersionName = inventoryItem["componentVersionName"]
             componentUrl = inventoryItem["componentUrl"]
@@ -140,10 +145,110 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
             }
 
 
+            # This field was added in 2021R4 so if earlier release add the list
+            try:
+                customFields = inventoryItem["customFields"]
+            except:
+                customFields = [] 
+
+            vulnerabilityExclusions = {}
+
+            # Create a list of the vulnerabilities to be ignored
+            for customField in customFields:
+                if customField["fieldLabel"] == "Vulnerability Ignore List":
+                    excludedCVEs = customField["value"]
+                    if excludedCVEs:
+                        print(excludedCVEs)
+                        # Create a list from the string response and remove white space
+                        for excludedCVE in excludedCVEs.split('\n'):
+                            excludedCVEDetails = excludedCVE.split('|')
+
+                            cve = excludedCVEDetails[0].strip()
+
+                            if len(excludedCVEDetails) == 2:
+                                exclusionReason = excludedCVEDetails[1].strip()
+                            else:
+                                exclusionReason = ""
+                            
+                            vulnerabilityExclusions[cve] = exclusionReason
+
+            bomLink = serialNumber + "/" + bomVersion + "#" + componentName + "-" + componentVersionName
+            # Grab vulnerability data for support for VEX and VDR reports
+            try:
+                vulnerabilities = inventoryItem["vulnerabilities"]
+            except:
+                logger.warning("    No vulnerabilty data for %s" %inventoryItemName)
+                vulnerabilities = []   
+
+            # Remap the data with vulnerability as key
+            for vulnerability in vulnerabilities:
+                vulnerabilityName = vulnerability["vulnerabilityName"]
+
+                if vulnerabilityName in vulnerabilityData and projectName in vulnerabilityData[vulnerabilityName]["affectedProjects"]:
+                    vulnerabilityData[vulnerabilityName]["affectedComponents"].append(bomLink)
+                else:
+                    # This is a new vulnerability to track
+                    vulnerabilityData[vulnerabilityName] = {}
+                    vulnerabilityData[vulnerabilityName]["affectedProjects"] = [projectName]
+
+                    vulnerabilityData[vulnerabilityName]["vulnerabilityDescription"] = ''.join(vulnerability["vulnerabilityDescription"].splitlines())
+                    vulnerabilityData[vulnerabilityName]["vulnerabilitySource"] = vulnerability["vulnerabilitySource"]
+                    vulnerabilityData[vulnerabilityName]["vulnerabilityUrl"] = vulnerability["vulnerabilityUrl"]
+
+                    vulnerabilityData[vulnerabilityName]["publishedDate"] = vulnerability["publishedDate"]
+                    vulnerabilityData[vulnerabilityName]["modifiedDate"] = vulnerability["modifiedDate"]
+                    vulnerabilityData[vulnerabilityName]["createdDate"] = vulnerability["publishedDate"] # No created date in response so use published date
+                      
+                    CWE = []
+                    if vulnerability["vulnerabilityCWE"]:
+                        for cwe in vulnerability["vulnerabilityCWE"]:
+                            CWE.append(cwe["name"].split("-")[1])
+
+                        CWE.sort()
+                        vulnerabilityData[vulnerabilityName]["vulnerabilityCWE"] = CWE
+                    else:
+                        vulnerabilityData[vulnerabilityName]["vulnerabilityCWE"] = []
+
+                    # Default to CVSSv3 data but use v2 if v3 data not accesible
+                    vulnerabilityScore = vulnerability["vulnerabilityCvssV3Score"]
+
+                    if vulnerabilityScore == "N/A":
+                        vulnerabilitySeverity = vulnerability["vulnerabilityCvssV2Severity"]
+                        vulnerabilityScore = vulnerability["vulnerabilityCvssV2Score"]
+                        vulnerabilityVector = vulnerability["vulnerabilityCvssV2Vector"]
+                        vulnerabilityMethod = "CVSSv2"
+                    else:
+                        vulnerabilitySeverity = vulnerability["vulnerabilityCvssV3Severity"]
+                        if vulnerability["vulnerabilityCvssV3Vector"] != "N/A":
+                            vulnerabilityMethod, vulnerabilityVector = vulnerability["vulnerabilityCvssV3Vector"].split("/", 1)
+                            vulnerabilityMethod = vulnerabilityMethod.replace(".", "").replace(":", "v")
+                        else:
+                            vulnerabilityVector = ""
+                            vulnerabilityMethod = ""
+
+                    if vulnerabilityVector == "N/A":
+                        vulnerabilityVector = ""
+
+                    vulnerabilityData[vulnerabilityName]["vulnerabilitySeverity"] = vulnerabilitySeverity
+                    vulnerabilityData[vulnerabilityName]["vulnerabilityScore"] = str(vulnerabilityScore)
+                    vulnerabilityData[vulnerabilityName]["vulnerabilityVector"] = vulnerabilityVector
+                    vulnerabilityData[vulnerabilityName]["vulnerabilityMethod"] = vulnerabilityMethod
+                    
+                    # Create a list of lists to hold the component data
+                    vulnerabilityData[vulnerabilityName]["affectedComponents"] = []
+                    vulnerabilityData[vulnerabilityName]["affectedComponents"].append(bomLink)
+
+                    # Is this an item being excluded?             
+                    if vulnerabilityName in vulnerabilityExclusions:
+                        vulnerabilityData[vulnerabilityName]["excluded"] = True
+                        vulnerabilityData[vulnerabilityName]["state"] = "not_affected"
+                        vulnerabilityData[vulnerabilityName]["justification"] = "code_not_reachable"
+                        vulnerabilityData[vulnerabilityName]["response"] = "will_not_fix"
+                        vulnerabilityData[vulnerabilityName]["detail"] = vulnerabilityExclusions[vulnerabilityName]
+
+
     # Sort the inventory data by Component Name / Component Version / Selected License Name
     sortedInventoryData = OrderedDict(sorted(inventoryData.items(), key=lambda x: (x[1]['componentName'],  x[1]['componentVersionName'])  ) )
-
-
 
     # Was an application name entered for the project
     if applicationDetails["applicationName"] == "":
@@ -157,7 +262,6 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
     else:
         applicationVersion = applicationDetails["applicationVersion"] 
 
-
     reportData = {}
     reportData["reportName"] = reportName
 
@@ -166,15 +270,15 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
     reportData["applicationPublisher"]  = applicationDetails["applicationPublisher"]
     reportData["applicationReportName"]  = applicationDetails["applicationReportName"]
 
-
-    reportData["serialNumber"] = str(uuid.uuid1())
+    reportData["bomVersion"] = bomVersion
+    reportData["serialNumber"] = serialNumber
     reportData["projectName"] =  projectHierarchy["name"]
     reportData["projectID"] = projectHierarchy["id"]
     reportData["projectList"] = projectList
     reportData["reportVersion"] = reportVersion
     reportData["inventoryData"] = sortedInventoryData
+    reportData["vulnerabilityData"] = vulnerabilityData
     reportData["CodeInsightReleaseYear"] = "2022"
-
 
     return reportData
 
