@@ -1,0 +1,36 @@
+{
+    "reportName" : "SBOM Report - CycloneDX",
+    "enableProjectPickerValue" : "false",
+    "reportOptions" : {
+        "option1" : 
+        {
+            "name" : "includeChildProjects",
+            "label" : "Include child project data? (True/False)",
+            "description" : "Should the report include data from child projects? <b>(True/False)</b>",
+            "type" : "string",
+            "defaultValue" : "True",
+            "required" : "true",
+            "order" : "1"
+        },
+        "option2" : 
+        {
+            "name" : "includeVDRReport",
+            "label" : "Generate VDR Report (True/False)",
+            "description" : "Should a VDR report be generated? <b>(True/False)</b>",
+            "type" : "string",
+            "defaultValue" : "True",
+            "required" : "true",
+            "order" : "2"
+        },
+        "option3" : 
+        {
+            "name" : "includeVEXReport",
+            "label" : "Generate VEX Report (True/False)",
+            "description" : "Should a VEX report be generated? <b>(True/False)</b>",
+            "type" : "string",
+            "defaultValue" : "True",
+            "required" : "true",
+            "order" : "3"
+        }
+    }
+}
