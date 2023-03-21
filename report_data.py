@@ -54,7 +54,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
 
     projectList.append(nodeDetails)
 
-    if includeChildProjects == "true":
+    if includeChildProjects:
         projectList = create_project_hierarchy(projectHierarchy, projectID, projectList, baseURL)
     else:
         logger.debug("Child hierarchy disabled")
@@ -161,7 +161,6 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
                 if customField["fieldLabel"] == "Vulnerability Ignore List":
                     excludedCVEs = customField["value"]
                     if excludedCVEs:
-                        print(excludedCVEs)
                         # Create a list from the string response and remove white space
                         for excludedCVE in excludedCVEs.split('\n'):
                             excludedCVEDetails = excludedCVE.split('|')

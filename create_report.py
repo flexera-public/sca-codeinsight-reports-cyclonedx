@@ -137,7 +137,7 @@ def main():
 			reports = report_errors.create_error_report(reportData)
 			print("    Error report artifacts have been created")
 		else:
-			reports = report_artifacts.create_report_artifacts(reportData)
+			reports = report_artifacts.create_report_artifacts(reportData, reportOptions)
 			print("    Report artifacts have been created")
 
 	print("    Create report archive for upload")
@@ -175,13 +175,30 @@ def verifyOptions(reportOptions):
 	falseOptions = ["false", "f", "no", "n"]
 
 	includeChildProjects = reportOptions["includeChildProjects"]
+	includeVDRReport = reportOptions["includeVDRReport"]
+	includeVEXReport = reportOptions["includeVEXReport"]
 
 	if includeChildProjects.lower() in trueOptions:
-		reportOptions["includeChildProjects"] = "true"
+		reportOptions["includeChildProjects"] = True
 	elif includeChildProjects.lower() in falseOptions:
-		reportOptions["includeChildProjects"] = "false"
+		reportOptions["includeChildProjects"] = False
 	else:
 		reportOptions["errorMsg"].append("Invalid option for including child projects: <b>%s</b>.  Valid options are <b>True/False</b>" %includeChildProjects)
+
+	if includeVDRReport.lower() in trueOptions:
+		reportOptions["includeVDRReport"] = True
+	elif includeVDRReport.lower() in falseOptions:
+		reportOptions["includeVDRReport"] = False
+	else:
+		reportOptions["errorMsg"].append("Invalid option for including child projects: <b>%s</b>.  Valid options are <b>True/False</b>" %includeVDRReport)
+
+	if includeVEXReport.lower() in trueOptions:
+		reportOptions["includeVEXReport"] = True
+	elif includeVEXReport.lower() in falseOptions:
+		reportOptions["includeVEXReport"] = False
+	else:
+		reportOptions["errorMsg"].append("Invalid option for including child projects: <b>%s</b>.  Valid options are <b>True/False</b>" %includeVEXReport)
+
 
 	if not reportOptions["errorMsg"]:
 		reportOptions.pop('errorMsg', None)
