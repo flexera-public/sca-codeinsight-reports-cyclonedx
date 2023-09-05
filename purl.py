@@ -10,7 +10,7 @@ File : purl.py
 
 import logging
 
-import CodeInsight_RESTAPIs.component.get_component_details
+import common.api.component.get_component_details
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +23,7 @@ def get_purl_string(inventoryItem, baseURL, authToken):
     componentId = inventoryItem["componentId"]
 
     # Since the summary does not have the forge grab that plus title from component lookup
-    componentDetails = CodeInsight_RESTAPIs.component.get_component_details.get_component_details_v3_summary(baseURL, componentId, authToken)
+    componentDetails = common.api.component.get_component_details.get_component_details_v3_summary(baseURL, componentId, authToken)
     forge = componentDetails["data"]["forge"]
     componentTitle = componentDetails["data"]["title"]
 

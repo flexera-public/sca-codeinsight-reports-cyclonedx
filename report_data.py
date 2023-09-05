@@ -8,56 +8,39 @@ Created On : Thu Mar 10 2022
 File : report_data.py
 '''
 
-import logging
-import uuid
+import logging, uuid
 from collections import OrderedDict
 
-import CodeInsight_RESTAPIs.project.get_child_projects
-import CodeInsight_RESTAPIs.project.get_project_inventory
-import CodeInsight_RESTAPIs.project.get_project_information
-import CodeInsight_RESTAPIs.system.get_system_details
+import common.application_details
+import common.project_heirarchy
+import common.api.project.get_project_inventory
+import common.api.project.get_project_information
+
 import purl
 import SPDX_license_mappings # To map evidence to an SPDX license name
 
 logger = logging.getLogger(__name__)
 
 #-------------------------------------------------------------------#
-def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVersion, reportOptions):
+def gather_data_for_report(baseURL, projectID, authToken, reportData):
     logger.info("Entering gather_data_for_report")
 
-    # Parse report options
-    includeChildProjects = reportOptions["includeChildProjects"]  # True/False
 
     projectList = [] # List to hold parent/child details for report
     inventoryData = {}  # Create a dictionary containing the inventory data using inventoryID as keys
     vulnerabilityData = {} # Create dictionary to hold all vulnerability data based on vul ID across all projects
 
+    reportOptions = reportData["reportOptions"]
+
+    # Parse report options
+    includeChildProjects = reportOptions["includeChildProjects"]  # True/False
+
     serialNumber = "urn:uuid:" + str(uuid.uuid1())
     bomVersion = "1"
 
-    releaseDetails = CodeInsight_RESTAPIs.system.get_system_details.get_release_information(baseURL)
-
-    # Get the list of parent/child projects start at the base project
-    projectHierarchy = CodeInsight_RESTAPIs.project.get_child_projects.get_child_projects_recursively(baseURL, projectID, authToken)
-    projectName = projectHierarchy["name"]
-
-    applicationDetails = determine_application_details(baseURL, projectName, projectID, authToken)
-
-
-    # Create a list of project data sorted by the project name at each level for report display  
-    # Add details for the parent node
-    nodeDetails = {}
-    nodeDetails["parent"] = "#"  # The root node
-    nodeDetails["projectName"] = projectName
-    nodeDetails["projectID"] = projectID
-    nodeDetails["projectLink"] = baseURL + "/codeinsight/FNCI#myprojectdetails/?id=" + str(projectHierarchy["id"]) + "&tab=projectInventory"
-
-    projectList.append(nodeDetails)
-
-    if includeChildProjects:
-        projectList = create_project_hierarchy(projectHierarchy, projectID, projectList, baseURL)
-    else:
-        logger.debug("Child hierarchy disabled")
+    applicationDetails = common.application_details.determine_application_details(projectID, baseURL, authToken)
+    projectList = common.project_heirarchy.create_project_heirarchy(baseURL, authToken, projectID, includeChildProjects)
+    topLevelProjectName = projectList[0]["projectName"]
 
     #  Gather the details for each project and summerize the data
     for project in projectList:
@@ -65,8 +48,13 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
         projectID = project["projectID"]
         projectName = project["projectName"]
 
-        projectInventory = CodeInsight_RESTAPIs.project.get_project_inventory.get_project_inventory_details(baseURL, projectID, authToken)
+        print("        Collect data for project: %s" %projectName)
+        print("            Collect inventory details.")
+        logger.info("            Collect inventory details")
+        projectInventory = common.api.project.get_project_inventory.get_project_inventory_details(baseURL, projectID, authToken)
         inventoryItems = projectInventory["inventoryItems"]
+        print("            Inventory has been collected.")
+        logger.info("            Inventory has been collected.")     
 
         # Collect the required data for each inventory item
         for inventoryItem in inventoryItems:
@@ -129,7 +117,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
                 licenseDetails["licenseURL"] =  selectedLicenseUrl
 
             else:
-                # There should be a valid SPDX ID here
+                # There is not a valid SPDX ID here
                 licenseDetails["licenseObjectType"] = "license"
                 licenseDetails["licenseName"] = selectedLicenseName
                 licenseDetails["licenseURL"] =  selectedLicenseUrl
@@ -252,35 +240,14 @@ def gather_data_for_report(baseURL, projectID, authToken, reportName, reportVers
     # Sort the inventory data by Component Name / Component Version / Selected License Name
     sortedInventoryData = OrderedDict(sorted(inventoryData.items(), key=lambda x: (x[1]['componentName'],  x[1]['componentVersionName'])  ) )
 
-    # Was an application name entered for the project
-    if applicationDetails["applicationName"] == "":
-        applicationName = projectHierarchy["name"]
-    else:
-        applicationName = applicationDetails["applicationName"]
-    
-    # Was an application version entered for the project
-    if applicationDetails["applicationVersion"] == "":
-        applicationVersion = "0.0.0"
-    else:
-        applicationVersion = applicationDetails["applicationVersion"] 
-
-    reportData = {}
-    reportData["reportName"] = reportName
-
-    reportData["applicationName"] = applicationName
-    reportData["applicationVersion"]  = applicationVersion
-    reportData["applicationPublisher"]  = applicationDetails["applicationPublisher"]
-    reportData["applicationReportName"]  = applicationDetails["applicationReportName"]
+    reportData["applicationDetails"]  = applicationDetails
+    reportData["topLevelProjectName"] = topLevelProjectName
 
     reportData["bomVersion"] = bomVersion
     reportData["serialNumber"] = serialNumber
-    reportData["projectName"] =  projectHierarchy["name"]
-    reportData["projectID"] = projectHierarchy["id"]
     reportData["projectList"] = projectList
-    reportData["reportVersion"] = reportVersion
     reportData["inventoryData"] = sortedInventoryData
     reportData["vulnerabilityData"] = vulnerabilityData
-    reportData["releaseDetails"] = releaseDetails
 
     return reportData
 
@@ -306,59 +273,3 @@ def create_project_hierarchy(project, parentID, projectList, baseURL):
             create_project_hierarchy(childProject, childProject["id"], projectList, baseURL)
 
     return projectList
-
-#--------------------------------------------
-def determine_application_details(baseURL, projectName, projectID, authToken):
-    logger.debug("Entering determine_application_details.")
-    # Create a application name for the report if the custom fields are populated
-    # Default values
-    applicationName = projectName
-    applicationVersion = ""
-    applicationPublisher = ""
-
-    projectInformation = CodeInsight_RESTAPIs.project.get_project_information.get_project_information_summary(baseURL, projectID, authToken)
-
-    # Project level custom fields added in 2022R1
-    if "customFields" in projectInformation:
-        customFields = projectInformation["customFields"]
-
-        # See if the custom project fields were propulated for this project
-        for customField in customFields:
-
-            # Is there the reqired custom field available?
-            if customField["fieldLabel"] == "Application Name":
-                if customField["value"]:
-                    applicationName = customField["value"]
-
-            # Is the custom version field available?
-            if customField["fieldLabel"] == "Application Version":
-                if customField["value"]:
-                    applicationVersion = customField["value"]     
-
-            # Is the custom version field available?
-            if customField["fieldLabel"] == "Application Publisher":
-                if customField["value"]:
-                    applicationPublisher = customField["value"]    
-
-
-    # Join the custom values to create the application name for the report artifacts
-    if applicationName != projectName:
-        if applicationVersion != "":
-            applicationReportName = applicationName + " - " + applicationVersion
-        else:
-            applicationReportName = applicationName
-    else:
-        applicationReportName = projectName
-
-    
-    applicationDetails = {}
-    applicationDetails["applicationName"] = applicationName
-    applicationDetails["applicationVersion"] = applicationVersion
-    applicationDetails["applicationPublisher"] = applicationPublisher
-    applicationDetails["applicationReportName"] = applicationReportName
-
-    logger.info("    applicationDetails: %s" %applicationDetails)
-
-
-
-    return applicationDetails

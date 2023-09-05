@@ -27,9 +27,9 @@ def generate_cyclonedx_report(reportData):
     reportUTCTimeStamp = reportData["reportUTCTimeStamp"]
     releaseDetails = reportData["releaseDetails"]
 
-    applicationPublisher = reportData["applicationPublisher"]
-    applicationName = reportData["applicationName"]
-    applicationVersion = reportData["applicationVersion"] 
+    applicationPublisher = reportData["applicationDetails"]["applicationPublisher"]
+    applicationName = reportData["applicationDetails"]["applicationName"]
+    applicationVersion = reportData["applicationDetails"]["applicationVersion"]
 
     xmlFile = reportFileNameBase + ".xml"
 
@@ -47,8 +47,7 @@ def generate_cyclonedx_report(reportData):
     toolName = ET.SubElement(tool, "name")
     toolName.text = releaseDetails["tool"]
     toolVersion = ET.SubElement(tool, "version")
-    toolVersion.text = releaseDetails["releaseYear"] + " " + releaseDetails["releaseVersion"]
-
+    toolVersion.text = releaseDetails["releaseVersion"]
     component = ET.SubElement(metadata, "component", type="application")
 
     publisherName= ET.SubElement(component, "publisher")
@@ -98,11 +97,12 @@ def generate_cyclonedx_report(reportData):
         else:
             license = ET.SubElement(licenses, "license")
 
+            print(licenseDetails)
+
             if "SPDXID" in licenseDetails:
                 licenseID = ET.SubElement(license, "id")
                 licenseID.text = licenseDetails["SPDXID"]
             else:
-
                 licenseName = ET.SubElement(license, "name")
                 licenseName.text = licenseDetails["licenseName"]
 
