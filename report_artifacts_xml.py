@@ -97,8 +97,6 @@ def generate_cyclonedx_report(reportData):
         else:
             license = ET.SubElement(licenses, "license")
 
-            print(licenseDetails)
-
             if "SPDXID" in licenseDetails:
                 licenseID = ET.SubElement(license, "id")
                 licenseID.text = licenseDetails["SPDXID"]

@@ -113,7 +113,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
             elif selectedLicenseSPDXIdentifier in SPDX_license_mappings.LICENSEMAPPINGS:
                 logger.info("        \"%s\" maps to SPDX ID \"%s\"" %(selectedLicenseSPDXIdentifier, SPDX_license_mappings.LICENSEMAPPINGS[selectedLicenseSPDXIdentifier]) )
                 licenseDetails["licenseObjectType"] = "license"
-                licenseDetails["SPDXID"] = selectedLicenseSPDXIdentifier
+                licenseDetails["SPDXID"] = SPDX_license_mappings.LICENSEMAPPINGS[selectedLicenseSPDXIdentifier]
                 licenseDetails["licenseURL"] =  selectedLicenseUrl
 
             else:
