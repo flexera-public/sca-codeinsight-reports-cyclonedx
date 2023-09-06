@@ -8,7 +8,7 @@ Created On : Thu Mar 10 2022
 File : report_data.py
 '''
 
-import logging, uuid
+import logging, uuid, unicodedata
 from collections import OrderedDict
 
 import common.application_details
@@ -53,8 +53,8 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
         logger.info("            Collect inventory details")
         projectInventory = common.api.project.get_project_inventory.get_project_inventory_details(baseURL, projectID, authToken)
         inventoryItems = projectInventory["inventoryItems"]
-        print("            Inventory has been collected.")
-        logger.info("            Inventory has been collected.")     
+        print("            Inventory has been collected and will be processed.")
+        logger.info("            Inventory has been collected and will be processed.")     
 
         # Collect the required data for each inventory item
         for inventoryItem in inventoryItems:
@@ -72,6 +72,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
             componentUrl = inventoryItem["componentUrl"]
 
             componentDescription = inventoryItem["description"][:100].replace("\n", " - ")
+            componentDescription = unicodedata.normalize('NFKD', componentDescription).encode('ASCII', 'ignore').decode('utf-8') 
 
             # Is there a specified component version?
             if componentDescription == "N/A":
