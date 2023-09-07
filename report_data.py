@@ -36,7 +36,9 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
     includeChildProjects = reportOptions["includeChildProjects"]  # True/False
 
     serialNumber = "urn:uuid:" + str(uuid.uuid1())
+    bomFormat = "CycloneDX"
     bomVersion = "1"
+    specVersion = "1.4"
 
     applicationDetails = common.application_details.determine_application_details(projectID, baseURL, authToken)
     projectList = common.project_heirarchy.create_project_heirarchy(baseURL, authToken, projectID, includeChildProjects)
@@ -243,8 +245,9 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
 
     reportData["applicationDetails"]  = applicationDetails
     reportData["topLevelProjectName"] = topLevelProjectName
-
+    reportData["bomFormat"] = bomFormat
     reportData["bomVersion"] = bomVersion
+    reportData["specVersion"] = specVersion
     reportData["serialNumber"] = serialNumber
     reportData["projectList"] = projectList
     reportData["inventoryData"] = sortedInventoryData

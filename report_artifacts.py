@@ -11,6 +11,7 @@ File : report_artifacts.py
 import logging
 
 import report_artifacts_xml
+import report_artifacts_json
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +22,11 @@ def create_report_artifacts(reportData, reportOptions):
     # Dict to hold the complete list of reports
     reports = {}
 
-    cyclonedxFile = report_artifacts_xml.generate_cyclonedx_report(reportData)
-    reports["viewable"] = cyclonedxFile
-    reports["allFormats"] = [cyclonedxFile]
+    jsonFile = report_artifacts_json.generate_json_report(reportData)  
+    xmlFile = report_artifacts_xml.generate_cyclonedx_report(reportData)
+
+    reports["viewable"] = jsonFile
+    reports["allFormats"] = [jsonFile, xmlFile]
 
     if reportOptions["includeVDRReport"]:
         vdrFile = report_artifacts_xml.generate_vdr_report(reportData)
