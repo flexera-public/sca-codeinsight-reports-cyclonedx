@@ -12,8 +12,6 @@ import logging
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
-import _version
-
 logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------#
@@ -24,6 +22,7 @@ def generate_cyclonedx_report(reportData):
     inventoryData = reportData["inventoryData"]
     serialNumber = reportData["serialNumber"]
     bomVersion = reportData["bomVersion"]
+    specVersion = reportData["specVersion"]
     reportUTCTimeStamp = reportData["reportUTCTimeStamp"]
     releaseDetails = reportData["releaseDetails"]
 
@@ -33,7 +32,7 @@ def generate_cyclonedx_report(reportData):
 
     xmlFile = reportFileNameBase + ".xml"
 
-    root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.4", serialNumber=serialNumber, version=bomVersion)
+    root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/" + specVersion, serialNumber=serialNumber, version=bomVersion)
 
     metadata = ET.SubElement(root, "metadata")
     timestamp = ET.SubElement(metadata, "timestamp")
