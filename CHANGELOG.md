@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0] - 2023-09-07
+### Changed
+- Using common 3.6.8 env/requirements
+- Use common module for API and branding etc
+### Fixed
+- Resove issue with SPDX license mapping
+- Improved logging
+- unicode cleanup for description
+## Added
+- Validated with cyclonedx-cli v 0.24.2
+
 
 ## [1.2.0] - 2023-03-21
 ### Fixed
