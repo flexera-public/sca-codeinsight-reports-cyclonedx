@@ -11,6 +11,8 @@ File : report_data.py
 import logging, uuid, unicodedata
 from collections import OrderedDict
 
+import common.api.component.get_component_version_vulnerabilities
+import common.api.inventory.inventory_vulnerability_analysis
 import common.application_details
 import common.project_heirarchy
 import common.api.project.get_project_inventory
@@ -28,8 +30,8 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
 
     projectList = [] # List to hold parent/child details for report
     inventoryData = {}  # Create a dictionary containing the inventory data using inventoryID as keys
-    vulnerabilityData = {} # Create dictionary to hold all vulnerability data based on vul ID across all projects
-
+    vulnerabilityData = {}  # Create dictionary to hold all unsuppressed vulnerability data based on vul ID across all projects
+    suppresedVulnerabilityData = {}  # Create dictionary to hold all suppressed vulnerability data based on vul ID across all projects
     reportOptions = reportData["reportOptions"]
 
     # Parse report options
@@ -138,112 +140,58 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
                 "bomref" : bomref
             }
 
-
-            # This field was added in 2021R4 so if earlier release add the list
-            try:
-                customFields = inventoryItem["customFields"]
-            except:
-                customFields = [] 
-
-            vulnerabilityExclusions = {}
-
-            # Create a list of the vulnerabilities to be ignored
-            for customField in customFields:
-                if customField["fieldLabel"] == "Vulnerability Ignore List":
-                    excludedCVEs = customField["value"]
-                    if excludedCVEs:
-                        # Create a list from the string response and remove white space
-                        for excludedCVE in excludedCVEs.split('\n'):
-                            excludedCVEDetails = excludedCVE.split('|')
-
-                            cve = excludedCVEDetails[0].strip()
-
-                            if len(excludedCVEDetails) == 2:
-                                exclusionReason = excludedCVEDetails[1].strip()
-                            else:
-                                exclusionReason = ""
-                            
-                            vulnerabilityExclusions[cve] = exclusionReason
-
             bomLink = serialNumber + "/" + bomVersion + "#" + componentName + "-" + componentVersionName
             # Grab vulnerability data for support for VEX and VDR reports
             try:
                 vulnerabilities = inventoryItem["vulnerabilities"]
+                vulnerabilitiesAnalysis = common.api.inventory.inventory_vulnerability_analysis.get_inventory_item_vulnerabilities_any_state(
+                    inventoryID, baseURL, authToken)
             except:
                 logger.warning("    No vulnerabilty data for %s" %inventoryItemName)
                 vulnerabilities = []   
 
             # Remap the data with vulnerability as key
+            componentVersionId = None
+            suppressedVulnerabilities = set()
             for vulnerability in vulnerabilities:
                 vulnerabilityName = vulnerability["vulnerabilityName"]
-
-                if vulnerabilityName in vulnerabilityData and projectName in vulnerabilityData[vulnerabilityName]["affectedProjects"]:
-                    vulnerabilityData[vulnerabilityName]["affectedComponents"].append(bomLink)
-                else:
-                    # This is a new vulnerability to track
-                    vulnerabilityData[vulnerabilityName] = {}
-                    vulnerabilityData[vulnerabilityName]["affectedProjects"] = [projectName]
-
-                    vulnerabilityData[vulnerabilityName]["vulnerabilityDescription"] = ''.join(vulnerability["vulnerabilityDescription"].splitlines())
-                    vulnerabilityData[vulnerabilityName]["vulnerabilitySource"] = vulnerability["vulnerabilitySource"]
-                    vulnerabilityData[vulnerabilityName]["vulnerabilityUrl"] = vulnerability["vulnerabilityUrl"]
-
-                    vulnerabilityData[vulnerabilityName]["publishedDate"] = vulnerability["publishedDate"]
-                    vulnerabilityData[vulnerabilityName]["modifiedDate"] = vulnerability["modifiedDate"]
-                    vulnerabilityData[vulnerabilityName]["createdDate"] = vulnerability["publishedDate"] # No created date in response so use published date
-                      
-                    CWE = []
-                    if vulnerability["vulnerabilityCWE"]:
-                        for cwe in vulnerability["vulnerabilityCWE"]:
-                            CWE.append(cwe["name"].split("-")[1])
-
-                        CWE.sort()
-                        vulnerabilityData[vulnerabilityName]["vulnerabilityCWE"] = CWE
-                    else:
-                        vulnerabilityData[vulnerabilityName]["vulnerabilityCWE"] = []
-
-                    # Default to CVSSv3 data but use v2 if v3 data not accesible
-                    vulnerabilityScore = vulnerability["vulnerabilityCvssV3Score"]
-
-                    if vulnerabilityScore == "N/A":
-                        vulnerabilitySeverity = vulnerability["vulnerabilityCvssV2Severity"]
-                        vulnerabilityScore = vulnerability["vulnerabilityCvssV2Score"]
-                        vulnerabilityVector = vulnerability["vulnerabilityCvssV2Vector"]
-                        vulnerabilityMethod = "CVSSv2"
-                    else:
-                        vulnerabilitySeverity = vulnerability["vulnerabilityCvssV3Severity"]
-                        if vulnerability["vulnerabilityCvssV3Vector"] != "N/A":
-                            vulnerabilityMethod, vulnerabilityVector = vulnerability["vulnerabilityCvssV3Vector"].split("/", 1)
-                            vulnerabilityMethod = vulnerabilityMethod.replace(".", "").replace(":", "v")
-                        else:
-                            vulnerabilityVector = ""
-                            vulnerabilityMethod = ""
-
-                    if vulnerabilityVector == "N/A":
-                        vulnerabilityVector = ""
-
-                    vulnerabilityData[vulnerabilityName]["vulnerabilitySeverity"] = vulnerabilitySeverity
-                    vulnerabilityData[vulnerabilityName]["vulnerabilityScore"] = str(vulnerabilityScore)
-                    vulnerabilityData[vulnerabilityName]["vulnerabilityVector"] = vulnerabilityVector
-                    vulnerabilityData[vulnerabilityName]["vulnerabilityMethod"] = vulnerabilityMethod
-                    
-                    # Create a list of lists to hold the component data
-                    vulnerabilityData[vulnerabilityName]["affectedComponents"] = []
-                    vulnerabilityData[vulnerabilityName]["affectedComponents"].append(bomLink)
-
-                    # Is this an item being excluded?             
-                    if vulnerabilityName in vulnerabilityExclusions:
+                update_vulnerability_data(
+                    vulnerabilityData, vulnerability, projectName, bomLink)
+                for analysisvul in vulnerabilitiesAnalysis["data"]["analyzedVulnerabilities"]:
+                    if analysisvul["vulnerabilityName"] == vulnerabilityName:
                         vulnerabilityData[vulnerabilityName]["excluded"] = True
-                        vulnerabilityData[vulnerabilityName]["state"] = "not_affected"
-                        vulnerabilityData[vulnerabilityName]["justification"] = "code_not_reachable"
-                        vulnerabilityData[vulnerabilityName]["response"] = "will_not_fix"
-                        vulnerabilityData[vulnerabilityName]["detail"] = vulnerabilityExclusions[vulnerabilityName]
-
+                        vulnerabilityData[vulnerabilityName]["state"] = analysisvul["analysis"]["state"]
+                        vulnerabilityData[vulnerabilityName]["justification"] = analysisvul["analysis"]["justification"]
+                        vulnerabilityData[vulnerabilityName]["response"] = analysisvul["analysis"]["response"]
+                        vulnerabilityData[vulnerabilityName]["detail"] = analysisvul["analysis"]["detail"]
+                    elif analysisvul["suppressed"] and analysisvul["vulnerabilityName"] not in suppressedVulnerabilities:
+                        if analysisvul["componentVersionId"] != componentVersionId:
+                            componentVersionVulnerabilities = common.api.component.get_component_version_vulnerabilities.get_component_version_vulnerabilities(
+                                baseURL, analysisvul["componentVersionId"], authToken)
+                            componentVersionId = analysisvul["componentVersionId"]
+                        for componentVersionVulnerability in componentVersionVulnerabilities["data"]:
+                            if componentVersionVulnerability["vulnerabilityName"] not in suppressedVulnerabilities and componentVersionVulnerability["vulnerabilityName"] == analysisvul["vulnerabilityName"]:
+                                componentVersionVulnerability["vulnerabilityAnalysis"] = analysisvul["analysis"]
+                                update_vulnerability_data(
+                                    suppresedVulnerabilityData, componentVersionVulnerability, projectName, bomLink)
+                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                           ]["excluded"] = True
+                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                           ]["state"] = analysisvul["analysis"]["state"]
+                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                           ]["justification"] = analysisvul["analysis"]["justification"]
+                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                           ]["response"] = analysisvul["analysis"]["response"]
+                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                           ]["detail"] = analysisvul["analysis"]["detail"]
+                                suppressedVulnerabilities.add(
+                                    analysisvul["vulnerabilityName"])
 
     # Sort the inventory data by Component Name / Component Version / Selected License Name
-    sortedInventoryData = OrderedDict(sorted(inventoryData.items(), key=lambda x: (x[1]['componentName'],  x[1]['componentVersionName'])  ) )
+    sortedInventoryData = OrderedDict(sorted(inventoryData.items(), key=lambda x: (
+        x[1]['componentName'],  x[1]['componentVersionName'])))
 
-    reportData["applicationDetails"]  = applicationDetails
+    reportData["applicationDetails"] = applicationDetails
     reportData["topLevelProjectName"] = topLevelProjectName
     reportData["bomFormat"] = bomFormat
     reportData["bomVersion"] = bomVersion
@@ -252,11 +200,11 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
     reportData["projectList"] = projectList
     reportData["inventoryData"] = sortedInventoryData
     reportData["vulnerabilityData"] = vulnerabilityData
-
+    reportData["supressedVulnerabilityData"] = suppresedVulnerabilityData
     return reportData
 
 
-#----------------------------------------------#
+# ----------------------------------------------#
 def create_project_hierarchy(project, parentID, projectList, baseURL):
     logger.debug("Entering create_project_hierarchy")
 
@@ -264,16 +212,78 @@ def create_project_hierarchy(project, parentID, projectList, baseURL):
     if len(project["childProject"]):
 
         # Sort by project name of child projects
-        for childProject in sorted(project["childProject"], key = lambda i: i['name'] ) :
+        for childProject in sorted(project["childProject"], key=lambda i: i['name']):
 
             nodeDetails = {}
             nodeDetails["projectID"] = str(childProject["id"])
             nodeDetails["parent"] = parentID
             nodeDetails["projectName"] = childProject["name"]
-            nodeDetails["projectLink"] = baseURL + "/codeinsight/FNCI#myprojectdetails/?id=" + str(childProject["id"]) + "&tab=projectInventory"
+            nodeDetails["projectLink"] = baseURL + "/codeinsight/FNCI#myprojectdetails/?id=" + \
+                str(childProject["id"]) + "&tab=projectInventory"
 
-            projectList.append( nodeDetails )
+            projectList.append(nodeDetails)
 
-            create_project_hierarchy(childProject, childProject["id"], projectList, baseURL)
+            create_project_hierarchy(
+                childProject, childProject["id"], projectList, baseURL)
 
     return projectList
+# ------------------------------------------------#
+
+
+def update_vulnerability_data(vulnerabilityData, vulnerability, projectName, bomLink):
+    vulnerabilityName = vulnerability["vulnerabilityName"]
+
+    if vulnerabilityName in vulnerabilityData and projectName in vulnerabilityData[vulnerabilityName]["affectedProjects"]:
+        vulnerabilityData[vulnerabilityName]["affectedComponents"].append(bomLink)
+    else:
+        # This is a new vulnerability to track
+        vulnerabilityData[vulnerabilityName] = {}
+        vulnerabilityData[vulnerabilityName]["affectedProjects"] = [projectName]
+
+        vulnerabilityData[vulnerabilityName]["vulnerabilityDescription"] = ''.join(vulnerability["vulnerabilityDescription"].splitlines())
+        vulnerabilityData[vulnerabilityName]["vulnerabilitySource"] = vulnerability["vulnerabilitySource"]
+        vulnerabilityData[vulnerabilityName]["vulnerabilityUrl"] = vulnerability["vulnerabilityUrl"]
+
+        vulnerabilityData[vulnerabilityName]["publishedDate"] = vulnerability["publishedDate"]
+        vulnerabilityData[vulnerabilityName]["modifiedDate"] = vulnerability["modifiedDate"]
+        vulnerabilityData[vulnerabilityName]["createdDate"] = vulnerability["publishedDate"]  # No created date in response so use published date
+
+        CWE = []
+        if vulnerability["vulnerabilityCWE"]:
+            for cwe in vulnerability["vulnerabilityCWE"]:
+                CWE.append(cwe["name"].split("-")[1])
+
+            CWE.sort()
+            vulnerabilityData[vulnerabilityName]["vulnerabilityCWE"] = CWE
+        else:
+            vulnerabilityData[vulnerabilityName]["vulnerabilityCWE"] = []
+
+        # Default to CVSSv3 data but use v2 if v3 data not accessible
+        vulnerabilityScore = vulnerability["vulnerabilityCvssV3Score"]
+
+        if vulnerabilityScore == "N/A":
+            vulnerabilitySeverity = vulnerability["vulnerabilityCvssV2Severity"]
+            vulnerabilityScore = vulnerability["vulnerabilityCvssV2Score"]
+            vulnerabilityVector = vulnerability["vulnerabilityCvssV2Vector"]
+            vulnerabilityMethod = "CVSSv2"
+        else:
+            vulnerabilitySeverity = vulnerability["vulnerabilityCvssV3Severity"]
+            if vulnerability["vulnerabilityCvssV3Vector"] != "N/A":
+                vulnerabilityMethod, vulnerabilityVector = vulnerability["vulnerabilityCvssV3Vector"].split("/", 1)
+                vulnerabilityMethod = vulnerabilityMethod.replace(".", "").replace(":", "v")
+            else:
+                vulnerabilityVector = ""
+                vulnerabilityMethod = ""
+
+        if vulnerabilityVector == "N/A":
+            vulnerabilityVector = ""
+
+        vulnerabilityData[vulnerabilityName]["vulnerabilitySeverity"] = vulnerabilitySeverity
+        vulnerabilityData[vulnerabilityName]["vulnerabilityScore"] = str(vulnerabilityScore)
+        vulnerabilityData[vulnerabilityName]["vulnerabilityVector"] = vulnerabilityVector
+        vulnerabilityData[vulnerabilityName]["vulnerabilityMethod"] = vulnerabilityMethod
+
+        # Create a list of lists to hold the component data
+        vulnerabilityData[vulnerabilityName]["affectedComponents"] = []
+        vulnerabilityData[vulnerabilityName]["affectedComponents"].append(bomLink)
+
