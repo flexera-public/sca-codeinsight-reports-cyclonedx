@@ -231,12 +231,13 @@ def generate_vex_report(reportData):
     
     reportFileNameBase = reportData["reportFileNameBase"]
     vulnerabilityData = reportData["vulnerabilityData"]
-
+    suppressedVulnerabilityData = reportData["supressedVulnerabilityData"]
     xmlVEXFile = reportFileNameBase.replace("CycloneDX", "VEX") + ".xml"
 
     root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.4", version="1")
     vulnerabilities = ET.SubElement(root, "vulnerabilities")
-
+    for vuln, data in suppressedVulnerabilityData.items():
+        vulnerabilityData[vuln] = data
     for vulnerability in vulnerabilityData:
 
         vulnerabilityDetails = vulnerabilityData[vulnerability]
