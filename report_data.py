@@ -32,6 +32,7 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
     inventoryData = {}  # Create a dictionary containing the inventory data using inventoryID as keys
     vulnerabilityData = {}  # Create dictionary to hold all unsuppressed vulnerability data based on vul ID across all projects
     suppresedVulnerabilityData = {}  # Create dictionary to hold all suppressed vulnerability data based on vul ID across all projects
+    suppressedVulnerabilities = set() # Created a set of vulnerabilities that are suppressed and should not be reanalyzed if present in different inventories.
     reportOptions = reportData["reportOptions"]
 
     # Parse report options
@@ -152,40 +153,62 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
 
             # Remap the data with vulnerability as key
             componentVersionId = None
-            suppressedVulnerabilities = set()
-            for vulnerability in vulnerabilities:
-                vulnerabilityName = vulnerability["vulnerabilityName"]
-                update_vulnerability_data(
-                    vulnerabilityData, vulnerability, projectName, bomLink)
-                for analysisvul in vulnerabilitiesAnalysis["data"]["analyzedVulnerabilities"]:
-                    if analysisvul["vulnerabilityName"] == vulnerabilityName:
-                        vulnerabilityData[vulnerabilityName]["excluded"] = True
-                        vulnerabilityData[vulnerabilityName]["state"] = analysisvul["analysis"]["state"]
-                        vulnerabilityData[vulnerabilityName]["justification"] = analysisvul["analysis"]["justification"]
-                        vulnerabilityData[vulnerabilityName]["response"] = analysisvul["analysis"]["response"]
-                        vulnerabilityData[vulnerabilityName]["detail"] = analysisvul["analysis"]["detail"]
-                    elif analysisvul["suppressed"] and analysisvul["vulnerabilityName"] not in suppressedVulnerabilities:
-                        if analysisvul["componentVersionId"] != componentVersionId:
-                            componentVersionVulnerabilities = common.api.component.get_component_version_vulnerabilities.get_component_version_vulnerabilities(
-                                baseURL, analysisvul["componentVersionId"], authToken)
-                            componentVersionId = analysisvul["componentVersionId"]
-                        for componentVersionVulnerability in componentVersionVulnerabilities["data"]:
-                            if componentVersionVulnerability["vulnerabilityName"] not in suppressedVulnerabilities and componentVersionVulnerability["vulnerabilityName"] == analysisvul["vulnerabilityName"]:
-                                componentVersionVulnerability["vulnerabilityAnalysis"] = analysisvul["analysis"]
-                                update_vulnerability_data(
-                                    suppresedVulnerabilityData, componentVersionVulnerability, projectName, bomLink)
-                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
-                                                           ]["excluded"] = True
-                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
-                                                           ]["state"] = analysisvul["analysis"]["state"]
-                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
-                                                           ]["justification"] = analysisvul["analysis"]["justification"]
-                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
-                                                           ]["response"] = analysisvul["analysis"]["response"]
-                                suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
-                                                           ]["detail"] = analysisvul["analysis"]["detail"]
-                                suppressedVulnerabilities.add(
-                                    analysisvul["vulnerabilityName"])
+            if not vulnerabilities:
+                suppressedVulnerabilitiesOnly = common.api.inventory.inventory_vulnerability_analysis.get_inventory_item_vulnerabilities_suppressed_state(inventoryID,baseURL,authToken)
+                if suppressedVulnerabilitiesOnly["data"]["analyzedVulnerabilities"]:
+                    for suppressedVulnerability in suppressedVulnerabilitiesOnly["data"]["analyzedVulnerabilities"]:
+                        if suppressedVulnerability["vulnerabilityName"] not in suppressedVulnerabilities:
+                            componentVersionVulnerabilities = common.api.component.get_component_version_vulnerabilities.get_component_version_vulnerabilities(baseURL, suppressedVulnerability["componentVersionId"], authToken)
+                            for componentVersionVulnerability in componentVersionVulnerabilities["data"]:
+                                if componentVersionVulnerability["vulnerabilityName"] not in suppressedVulnerabilities and componentVersionVulnerability["vulnerabilityName"] == suppressedVulnerability["vulnerabilityName"]:
+                                    componentVersionVulnerability["vulnerabilityAnalysis"] = suppressedVulnerability["analysis"]
+                                    update_vulnerability_data(suppresedVulnerabilityData, componentVersionVulnerability, projectName, bomLink)
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                                ]["excluded"] = True
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                            ]["state"] = suppressedVulnerability["analysis"]["state"]
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                            ]["justification"] = suppressedVulnerability["analysis"]["justification"]
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                            ]["response"] = suppressedVulnerability["analysis"]["response"]
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                            ]["detail"] = suppressedVulnerability["analysis"]["detail"]
+                                    suppressedVulnerabilities.add(
+                                        suppressedVulnerability["vulnerabilityName"])
+            else:
+                for vulnerability in vulnerabilities:
+                    vulnerabilityName = vulnerability["vulnerabilityName"]
+                    update_vulnerability_data(
+                        vulnerabilityData, vulnerability, projectName, bomLink)
+                    for analysisvul in vulnerabilitiesAnalysis["data"]["analyzedVulnerabilities"]:
+                        if analysisvul["vulnerabilityName"] == vulnerabilityName:
+                            vulnerabilityData[vulnerabilityName]["excluded"] = True
+                            vulnerabilityData[vulnerabilityName]["state"] = analysisvul["analysis"]["state"]
+                            vulnerabilityData[vulnerabilityName]["justification"] = analysisvul["analysis"]["justification"]
+                            vulnerabilityData[vulnerabilityName]["response"] = analysisvul["analysis"]["response"]
+                            vulnerabilityData[vulnerabilityName]["detail"] = analysisvul["analysis"]["detail"]
+                        elif analysisvul["suppressed"] and analysisvul["vulnerabilityName"] not in suppressedVulnerabilities:
+                            if analysisvul["componentVersionId"] != componentVersionId:
+                                componentVersionVulnerabilities = common.api.component.get_component_version_vulnerabilities.get_component_version_vulnerabilities(
+                                    baseURL, analysisvul["componentVersionId"], authToken)
+                                componentVersionId = analysisvul["componentVersionId"]
+                            for componentVersionVulnerability in componentVersionVulnerabilities["data"]:
+                                if componentVersionVulnerability["vulnerabilityName"] not in suppressedVulnerabilities and componentVersionVulnerability["vulnerabilityName"] == analysisvul["vulnerabilityName"]:
+                                    componentVersionVulnerability["vulnerabilityAnalysis"] = analysisvul["analysis"]
+                                    update_vulnerability_data(
+                                        suppresedVulnerabilityData, componentVersionVulnerability, projectName, bomLink)
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                            ]["excluded"] = True
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                            ]["state"] = analysisvul["analysis"]["state"]
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                            ]["justification"] = analysisvul["analysis"]["justification"]
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                            ]["response"] = analysisvul["analysis"]["response"]
+                                    suppresedVulnerabilityData[componentVersionVulnerability["vulnerabilityName"]
+                                                            ]["detail"] = analysisvul["analysis"]["detail"]
+                                    suppressedVulnerabilities.add(
+                                        analysisvul["vulnerabilityName"])
 
     # Sort the inventory data by Component Name / Component Version / Selected License Name
     sortedInventoryData = OrderedDict(sorted(inventoryData.items(), key=lambda x: (
@@ -204,7 +227,8 @@ def gather_data_for_report(baseURL, projectID, authToken, reportData):
     return reportData
 
 
-# ----------------------------------------------#
+# -----------------------------------------------
+
 def create_project_hierarchy(project, parentID, projectList, baseURL):
     logger.debug("Entering create_project_hierarchy")
 
@@ -229,14 +253,12 @@ def create_project_hierarchy(project, parentID, projectList, baseURL):
     return projectList
 # ------------------------------------------------#
 
-
 def update_vulnerability_data(vulnerabilityData, vulnerability, projectName, bomLink):
     vulnerabilityName = vulnerability["vulnerabilityName"]
 
     if vulnerabilityName in vulnerabilityData and projectName in vulnerabilityData[vulnerabilityName]["affectedProjects"]:
         vulnerabilityData[vulnerabilityName]["affectedComponents"].append(bomLink)
     else:
-        # This is a new vulnerability to track
         vulnerabilityData[vulnerabilityName] = {}
         vulnerabilityData[vulnerabilityName]["affectedProjects"] = [projectName]
 
@@ -285,5 +307,6 @@ def update_vulnerability_data(vulnerabilityData, vulnerability, projectName, bom
 
         # Create a list of lists to hold the component data
         vulnerabilityData[vulnerabilityName]["affectedComponents"] = []
-        vulnerabilityData[vulnerabilityName]["affectedComponents"].append(bomLink)
+        if bomLink not in set(vulnerabilityData[vulnerabilityName]["affectedComponents"]):
+            vulnerabilityData[vulnerabilityName]["affectedComponents"].append(bomLink)
 
