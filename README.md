@@ -11,6 +11,7 @@ The `sca-codeinsight-reports-cyclonedx` repository is a report for Revenera's Co
 |--|--|
 |1.0.x |2021R4  |
 |1.1.x |2022R1  |
+|1.4.x |2023R3  |
 
 **Repository Cloning**
 
