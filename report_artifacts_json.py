@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 #--------------------------------------------------------------------------------#
 
-def generate_json_report(reportData):
+def generate_json_report(reportData):  
     logger.info("    Entering generate_json_report")
 
     reportFileNameBase = reportData["reportFileNameBase"]
@@ -38,14 +38,16 @@ def generate_json_report(reportData):
 
     reportDetails["metadata"] = {}
     reportDetails["metadata"]["timestamp"] = reportUTCTimeStamp
-    reportDetails["metadata"]["tools"] = []
-
-    toolDetails = {}
-    toolDetails["vendor"] = releaseDetails["vendor"]
-    toolDetails["name"] = releaseDetails["tool"]
-    toolDetails["version"] = releaseDetails["releaseVersion"]
+    reportDetails["metadata"]["tools"] = {}
     
-    reportDetails["metadata"]["tools"].append(toolDetails)
+    
+    reportDetails["metadata"]["tools"]["components"] = []    
+    componentsData={}
+    componentsData["type"] = "application"
+    componentsData["author"] = releaseDetails["vendor"]
+    componentsData["name"] = releaseDetails["tool"]
+    componentsData["version"] = releaseDetails["releaseVersion"]
+    reportDetails["metadata"]["tools"]["components"] .append(componentsData)
 
     reportDetails["metadata"]["component"] = {}
     reportDetails["metadata"]["component"]["type"] = "application"
