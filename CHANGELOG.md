@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.4.2] - 2025-04-03
+### Changed
+- Updated CycloneDX report json version compliant to 1.6.x
+
 ## [1.4.1] - 2024-11-05
 ### Changed
 - Enhanced the VEX report to retrieve annotated vulnerability analysis data for inventory, including all suppressed vulnerabilities.

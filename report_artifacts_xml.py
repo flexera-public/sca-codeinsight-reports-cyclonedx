@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------#
 def generate_cyclonedx_report(reportData):
+
     logger.info("    Entering generate_cyclonedx_report")
     
     reportFileNameBase = reportData["reportFileNameBase"]
@@ -39,13 +40,14 @@ def generate_cyclonedx_report(reportData):
     timestamp.text = reportUTCTimeStamp
     
     tools = ET.SubElement(metadata, "tools")
-    tool = ET.SubElement(tools, "tool")
+    tool = ET.SubElement(tools, "components")
+    toolsComponents = ET.SubElement(tool, "component", type="application")
 
-    toolVendor = ET.SubElement(tool, "vendor")
-    toolVendor.text = releaseDetails["vendor"]
-    toolName = ET.SubElement(tool, "name")
+    author = ET.SubElement(toolsComponents, "author")
+    author.text = releaseDetails["vendor"]
+    toolName = ET.SubElement(toolsComponents, "name")
     toolName.text = releaseDetails["tool"]
-    toolVersion = ET.SubElement(tool, "version")
+    toolVersion = ET.SubElement(toolsComponents, "version")
     toolVersion.text = releaseDetails["releaseVersion"]
     component = ET.SubElement(metadata, "component", type="application")
 
@@ -106,9 +108,10 @@ def generate_cyclonedx_report(reportData):
             licenseURL = ET.SubElement(license, "url")
             licenseURL.text = licenseDetails["licenseURL"]
 
-        purlValue = ET.SubElement(cycloneDXEntry, "purl")
-        purlValue.text = purl
-
+            if purl:
+                purlValue = ET.SubElement(cycloneDXEntry, "purl")
+                purlValue.text = purl
+    
         externalReferences = ET.SubElement(cycloneDXEntry, "externalReferences")
         reference = ET.SubElement(externalReferences, "reference", type="website")
         url = ET.SubElement(reference, "url")
@@ -134,7 +137,7 @@ def generate_vdr_report(reportData):
 
     xmlVRDFile = reportFileNameBase.replace("CycloneDX", "VDR") + ".xml"
 
-    root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.4", version="1")
+    root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.6", version="1")
     vulnerabilities = ET.SubElement(root, "vulnerabilities")
 
     for vulnerability in vulnerabilityData:
@@ -234,7 +237,7 @@ def generate_vex_report(reportData):
     suppressedVulnerabilityData = reportData["supressedVulnerabilityData"]
     xmlVEXFile = reportFileNameBase.replace("CycloneDX", "VEX") + ".xml"
 
-    root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.4", version="1")
+    root= ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.6", version="1")
     vulnerabilities = ET.SubElement(root, "vulnerabilities")
     for vuln, data in suppressedVulnerabilityData.items():
         vulnerabilityData[vuln] = data
