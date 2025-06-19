@@ -1,23 +1,26 @@
-'''
+"""
 Copyright 2023 Flexera Software LLC
 See LICENSE.TXT for full license text
 SPDX-License-Identifier: MIT
 
-Author : sgeary  
+Author : sgeary
 Created On : Wed Sep 06 2023
 File : report_artifacts_json.py
-'''
+"""
+
 import logging, json
+
 logger = logging.getLogger(__name__)
 
-#--------------------------------------------------------------------------------#
+# --------------------------------------------------------------------------------#
 
-def generate_json_report(reportData):  
+
+def generate_json_report(reportData):
     logger.info("    Entering generate_json_report")
 
     reportFileNameBase = reportData["reportFileNameBase"]
     jsonFile = reportFileNameBase + ".json"
-    
+
     inventoryData = reportData["inventoryData"]
     specVersion = reportData["specVersion"]
     serialNumber = reportData["serialNumber"]
@@ -25,10 +28,6 @@ def generate_json_report(reportData):
     bomVersion = reportData["bomVersion"]
     reportUTCTimeStamp = reportData["reportUTCTimeStamp"]
     releaseDetails = reportData["releaseDetails"]
-
-    applicationPublisher = reportData["applicationDetails"]["applicationPublisher"]
-    applicationName = reportData["applicationDetails"]["applicationName"]
-    applicationVersion = reportData["applicationDetails"]["applicationVersion"]
 
     reportDetails = {}
     reportDetails["bomFormat"] = bomFormat
@@ -39,27 +38,20 @@ def generate_json_report(reportData):
     reportDetails["metadata"] = {}
     reportDetails["metadata"]["timestamp"] = reportUTCTimeStamp
     reportDetails["metadata"]["tools"] = {}
-    
-    
-    reportDetails["metadata"]["tools"]["components"] = []    
-    componentsData={}
+
+    reportDetails["metadata"]["tools"]["components"] = []
+    componentsData = {}
     componentsData["type"] = "application"
     componentsData["author"] = releaseDetails["vendor"]
     componentsData["name"] = releaseDetails["tool"]
     componentsData["version"] = releaseDetails["releaseVersion"]
-    reportDetails["metadata"]["tools"]["components"] .append(componentsData)
+    reportDetails["metadata"]["tools"]["components"].append(componentsData)
 
     reportDetails["metadata"]["component"] = {}
     reportDetails["metadata"]["component"]["type"] = "application"
-    if applicationPublisher:
-        reportDetails["metadata"]["component"]["publisher"] = applicationPublisher
-    if applicationName:
-        reportDetails["metadata"]["component"]["name"] = applicationName
-    if applicationVersion:
-        reportDetails["metadata"]["component"]["version"] = applicationVersion
+    reportDetails["metadata"]["component"]["name"] = reportData["topLevelProjectName"]
 
-    reportDetails["components"]= []
-
+    reportDetails["components"] = []
 
     for inventoryID in inventoryData:
 
@@ -74,14 +66,14 @@ def generate_json_report(reportData):
         component = {}
         if bomref != "":
             component["bom-ref"] = bomref
-        
+
         component["type"] = "library"
         component["name"] = componentName
         component["version"] = componentVersionName
         component["description"] = componentDescription
         component["licenses"] = []
-        
-        license = {}   
+
+        license = {}
 
         if licenseDetails["licenseObjectType"] == "expression":
             license["expression"] = licenseDetails["possibleLicenses"]
@@ -106,18 +98,16 @@ def generate_json_report(reportData):
 
         reportDetails["components"].append(component)
 
-
-
     try:
-        report_ptr = open(jsonFile,"w")
+        report_ptr = open(jsonFile, "w")
     except:
-        print("Failed to open file %s:" %jsonFile)
-        logger.error("Failed to open file %s:" %jsonFile)
-        return {"errorMsg" : "Failed to open file %s:" %jsonFile}
+        print("Failed to open file %s:" % jsonFile)
+        logger.error("Failed to open file %s:" % jsonFile)
+        return {"errorMsg": "Failed to open file %s:" % jsonFile}
 
     json.dump(reportDetails, report_ptr, indent=4)
 
-    report_ptr.close() 
+    report_ptr.close()
 
     logger.info("    Exiting generate_json_report")
 
