@@ -1,0 +1,271 @@
+/***************************** 
+   CSS for Revenera Reports 
+*****************************/
+
+.header {
+    min-height: 58px;
+    background-color: #323E48;
+    border-bottom: 4px solid #1ED65F;
+    margin-bottom: 18px;
+    overflow: auto;
+}
+
+.logo {
+    float: left;
+    padding-left: 24px;
+    padding-top: 13px;
+    padding-right: 48px;
+    padding-bottom: 0;
+}
+
+.report-title {
+    float: right !important;
+    padding-top: 18px;
+    font-size: 22px;
+    color: #1ED65F;
+    text-transform: uppercase;
+    float: left;
+    padding-bottom: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.report-footer {
+    margin-top: 20px !important;
+    font-size: 13px;
+    background-color: #ebebeb;
+    padding: 18px;
+    height: 65px;
+}
+
+
+.hierarchy {
+    font-size: 12px;
+  }
+
+h6.gray {
+    font-size: 14px;
+    color: #323E48;
+  }
+
+hr.large {
+  border: 10px solid #1ED65F;
+  border-radius: 5px;}
+  
+hr.medium {
+  border: 6px solid #1ED65F;
+  border-radius: 3px;}
+  
+hr.small {
+  border: 2px solid #1ED65F;
+  border-radius: 1px;}
+
+hr.small-gray {
+    border: 2px solid #323E48;
+    border-radius: 1px;}
+
+/***************************** 
+    Table specific styling 
+*****************************/
+
+.table { 
+    border-radius: 5px; 
+    width: 50%;  
+    margin: 0px auto; 
+    float: none;
+}
+
+th {
+    background-color: #323E48;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+} 
+
+td {
+    font-size: 12px;
+    font-weight: normal;
+} 
+
+.page-item.active .page-link {
+    color: #323E48 !important;
+    background-color: #1ED65F !important;
+    border-color: #323E48 !important; 
+}
+
+.page-link {
+    color: #323E48 !important;
+    background-color: #fff !important;
+    border: 1px solid #323E48 !important; 
+}
+
+.page-link:hover {
+    color: #1ED65F !important;
+    background-color: #323E48 !important;
+    border-color: #323E48 !important; 
+}
+
+/*****************************
+    Indicator dots and colors
+******************************/
+
+.dot { 
+    display: inline-block; 
+    border: 1px solid #626262; 
+    border-radius: 6px; 
+    width: 10px; height: 10px; 
+    vertical-align: middle;
+    margin-right: 8px; margin-top: -2px; 
+}
+
+.dot-green { background-color: #008000; }
+.dot-yellow { background-color: #FFFF00; }
+.dot-red { background-color: #FF0000; }
+.dot-blue { background-color: #00008B; }
+.dot-gray { background-color: lightgrey; }
+.dot-blank { background-color: #FFFFFF; }
+
+.dot-copyright { background-color: #0099FF; }
+.dot-license { background-color: #33CC33; }
+.dot-emailURL { background-color: #FF02F9; }
+.dot-searchTerm { background-color: #02FFFF; }
+.dot-exactMatch { background-color: #FF0000; }
+.dot-sourceMatch { background-color: #FFFF00; }
+
+
+/***************************** 
+    Button specific styling 
+*****************************/
+
+.btn-revenera-green
+{
+    background-color: #1ED65F
+}
+
+.btn-revenera-green:hover 
+{ 
+    background-color: #323E48 
+}
+
+.btn-revenera-gray
+{
+    background-color: #323E48;
+    color: #FFFFFF;
+}
+
+.btn-revenera-gray:active:focus,
+.btn-revenera-gray:hover 
+{ 
+    background-color: #1ED65F;
+    border-color: #1ED65F 
+}
+
+.btn-vuln
+{
+    font-size: 12px;
+    font-weight: bold;
+    color:#000;
+    border-color: #000;
+    width: 40px !important;
+    text-align: center !important;
+    padding: 0;
+    cursor: default !important;
+}
+
+.btn-menu
+{
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/***************************** 
+    Priority buttons 
+*****************************/
+.btn-empty
+{
+    width: 40px !important;
+}
+
+.btn-critical
+{
+    background-color: #400000;
+    color:#FFF !important;
+
+}
+.btn-high
+{
+    background-color: #C00000;
+    color:#FFF !important;
+}
+
+.btn-medium
+{
+    background-color: #FFA500;
+}
+
+.btn-low
+{
+    background-color: #FFFF00;
+}
+
+.btn-none
+{
+    background-color: #D3D3D3;
+}
+
+.btn-no-vulns
+{
+    background-color: #FFFFFF;
+    width: 212px !important;
+}
+
+/***************************** 
+    License buttons 
+*****************************/
+
+.btn-license
+{
+    font-size: 12px;
+    font-weight: bold;
+    color:#000;
+    border-color: #000;
+    width: 40px !important;
+    text-align: center !important;
+    padding: 0;
+    cursor: default !important;
+}
+
+.btn-P1
+{
+    background-color: #C00000;
+    color:#FFF !important;
+}
+
+.btn-P2
+{
+    background-color: #FFFF00;
+}
+
+.btn-P3
+{
+    background-color: #008000;
+}
+.btn-P4
+{
+    background-color: #00008B;
+}
+
+/***************************** 
+    datatables specific styling 
+*****************************/
+.pagination .page-item.active .page-link
+{
+     background-color: #1ED65F; 
+}
+
+/*  Remove the folder icon from the jstree for
+    project hierarchy view */
+.jstree li > a > .jstree-icon 
+{  
+    display:none !important; 
+} 
