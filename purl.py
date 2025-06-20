@@ -3,19 +3,20 @@ Copyright 2022 Flexera Software LLC
 See LICENSE.TXT for full license text
 SPDX-License-Identifier: MIT
 
-Author : sgeary  
+Author : sgeary
 Created On : Fri May 20 2022
+Modified By : sarthak
+Modified On: Thu Apr 24 2025
 File : purl.py
 '''
 
 import logging
-
-import common.api.component.get_component_details
+import report_data_db
 logger = logging.getLogger(__name__)
 
 
 ##############################
-def get_purl_string(inventoryItem, baseURL, authToken):
+def get_purl_string(inventoryItem, componentVersionName,inventoryItemName):
     logger.info("entering get_purl_string")
 
     purlString = "pkg:"  # Default value 
@@ -23,9 +24,9 @@ def get_purl_string(inventoryItem, baseURL, authToken):
     componentId = inventoryItem["componentId"]
 
     # Since the summary does not have the forge grab that plus title from component lookup
-    componentDetails = common.api.component.get_component_details.get_component_details_v3_summary(baseURL, componentId, authToken)
-    forge = componentDetails["data"]["forge"]
-    componentTitle = componentDetails["data"]["title"]
+    componentDetails = report_data_db.get_component_forge(componentId)
+    forge = componentDetails[0]["forge"]
+    componentTitle = componentDetails[0]["title"]
 
     componentName = inventoryItem["componentName"]
     componentVersionName = inventoryItem["componentVersionName"]
@@ -37,7 +38,7 @@ def get_purl_string(inventoryItem, baseURL, authToken):
         logger.debug("    is now: %s" %componentVersionName)
 
 
-    inventoryItemName = inventoryItem["name"]
+    inventoryItemName = inventoryItem["inventoryItemName"]
 
     logger.info("    Forge: %s  Inventory Item: %s" %(forge, inventoryItemName))
 

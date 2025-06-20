@@ -1,44 +1,58 @@
 # This repo is the CycloneDX SBOM report for Code Insight.
 
-The `sca-codeinsight-reports-cyclonedx` repository is a report for Revenera's Code Insight product. This report allows a user to generate an CycloneDX report representing the software bill of material (SBOM) for a given project. 
+The `sca-codeinsight-reports-cyclonedx` repository provides a report for Revenera's Code Insight product. This report enables users to generate a CycloneDX report representing the Software Bill of Materials (SBOM) for a specific project.
 
 ## Prerequisites
 
+### Code Insight Release Requirements
 
- **Code Insight Release Requirements**
-  
 |Repository Tag | Minimum Code Insight Release  |
 |--|--|
 |1.0.x |2021R4  |
 |1.1.x |2022R1  |
 |1.4.x |2024R3  |
+|1.5.x |2024R3  |
 
 **Repository Cloning**
 
 This repository should be cloned directly into the **$CODEINSIGHT_INSTALLDIR/custom_report_scripts** directory. If no prior custom reports has been installed, this directory will need to be created prior to cloning.
 
-**Submodule Repositories**
+### Python Requirements
 
-This repository contains two submodule repositories for code that is used across multiple projects.  There are two options for cloning this repository and ensuring that the required submodules are also installed.
+This repository requires the Requests module to interact with the Code Insight API's. Install the dependencies using the following command:
 
-Clone the report repository use the recursive option to automatically pull in the required submodules
+pip install -r requirements.txt
 
-	git clone --recursive
+Offline Mode
+The sca-codeinsight-reports-cyclonedx custom report can be used in offline mode, meaning the Code Insight server does not need to be running.
 
- Alternatively clone the report repository and then clone the submodules separately by entering the cloned directory and then pulling down the necessary submodules code via   
+For Windows:
+Open a command prompt at the location:
+$CODEINSIGHT_INSTALLDIR/custom_report_scripts/sca-codeinsight-reports-cyclonedx
+Run the following command
+python create_report.py -pid <projectID> -reportOpts "{\"includeChildProjects\": \"True\", \"includeVEXReport\": \"True\", \"includeVDRReport\": \"True\"}"
 
-	git submodule init
+For Linux:
+Open a terminal at the location:
+$CODEINSIGHT_INSTALLDIR/custom_report_scripts/sca-codeinsight-reports-cyclonedx
+Run the following command:
+python3 create_report.py -pid <projectID> -reportOpts '{"includeChildProjects":"True","includeVEXReport":"True","includeVDRReport":"True"}'
 
-	git submodule update
+Notes:
+The -pid flag is mandatory.
+The -reportOpts flag is optional. If omitted, all values will default to "True".
+Example: python3 create_report.py -pid <projectID>
 
-**Python Requirements**
+Report Locations:
+Recently Generated Reports:
+$CODEINSIGHT_INSTALLDIR/custom_report_scripts/sca-codeinsight-reports-cyclonedx/DBReports
+Older Reports:
+$CODEINSIGHT_INSTALLDIR/custom_report_scripts/sca-codeinsight-reports-cyclonedx/DBReports/Backup
 
-This repository requires the python requests module to interact with the Code Insight REST APIs.  To install this as well as the the modules it depends on the [requirements.txt](requirements.txt) file has been supplied and can be used as follows.
 
-    pip install -r requirements.txt
+Configuration and Report Registration
 
-## Configuration and Report Registration
- 
+It is optional but recommended to have the Code Insight server up and running if you intend to trigger this report from the Code Insight UI under the reports tab.
 For registration purposes the file **server_properties.json** should be created and located in the **$CODEINSIGHT_INSTALLDIR/custom_report_scripts/** directory.  This file contains a json with information required to register the report within Code Insight as shown  here:
 
 >     {
@@ -77,11 +91,6 @@ To update this report configuration:
 
 This report is executed directly from within Revenera's Code Insight product. From the project reports tab of each Code Insight project it is possible to *generate* the **CycloneDX Report** via the Report Framework.
 
-The generated reports will utilize the following Project Custom Fields if available
-- Application Name
-- Application Version
-- Application Publisher
-
 The above values will be used in place of the **Project Name** for any project references within the generated artifacts to allow users the ability abstract the project name for the application SBOM report.
 
 
@@ -95,7 +104,6 @@ The Code Insight Report Framework will provide the following to the report when 
 - Report ID
 - Authorization Token
  
-
 For this example report these three items are passed on to a batch or sh file which will in turn execute a python script. This script will then:
 
 - Collect data for the report via REST API using the Project ID and Authorization Token

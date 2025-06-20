@@ -5,14 +5,16 @@ SPDX-License-Identifier: MIT
 
 Author : sgeary  
 Created On : Fri Feb 24 2023
+Modified By : sarthak
+Modified On: Thu Apr 24 2025
 File : registration.py
 '''
 import sys, os, logging, argparse, json, stat
 
-import common.api.reports.get_reports
-import common.api.reports.create_report
-import common.api.reports.delete_report
-import common.api.reports.update_report
+import reports.get_reports
+import reports.create_report
+import reports.delete_report
+import reports.update_report
 
 ###################################################################################
 # Test the version of python to make sure it's at least the version the script
@@ -139,7 +141,7 @@ def register_custom_reports():
     logger.debug("Entering register_custom_reports")
 
     # Get the current reports so we can ensure the indexes of the new reports have no conflicts
-    response = common.api.reports.get_reports.get_all_currently_registered_reports(baseURL, adminAuthToken)
+    response = reports.get_reports.get_all_currently_registered_reports(baseURL, adminAuthToken)
     
     if "error" in response:
         if "Status 401 – Unauthorized" in response["error"]:
@@ -157,7 +159,7 @@ def register_custom_reports():
     logger.info("Attempting to register %s with a report order of %s" %(reportName, reportOrder))
     print("Attempting to register %s with a report order of %s" %(reportName, reportOrder))
 
-    response = common.api.reports.create_report.register_report(reportName, reportPath, reportOrder, enableProjectPickerValue, reportOptions, baseURL, adminAuthToken)
+    response = reports.create_report.register_report(reportName, reportPath, reportOrder, enableProjectPickerValue, reportOptions, baseURL, adminAuthToken)
 
     if "error" in response:
         if "Unrecognized field" in response["error"]:
@@ -184,7 +186,7 @@ def unregister_custom_reports():
 
     # 2023R1 removed the ability to unregister a report by name so attempt to unregister by ID first
     # and then default back to name to support older releases
-    response = common.api.reports.get_reports.get_all_currently_registered_reports_by_name(baseURL, adminAuthToken, reportName)
+    response = reports.get_reports.get_all_currently_registered_reports_by_name(baseURL, adminAuthToken, reportName)
 
     if "error" in response:
         if "Total records :0 number of pages :0" in response["error"]:
@@ -197,11 +199,11 @@ def unregister_custom_reports():
     
     reportId = response[0]["id"]
 
-    response = common.api.reports.delete_report.unregister_report_by_id(baseURL, adminAuthToken, reportId)
+    response = reports.delete_report.unregister_report_by_id(baseURL, adminAuthToken, reportId)
 
     if "error" in response:
         # There was an error so try via the report name
-        response = common.api.reports.delete_report.unregister_report_by_name(baseURL, adminAuthToken, reportName)
+        response = reports.delete_report.unregister_report_by_name(baseURL, adminAuthToken, reportName)
         print("%s has been unregistered." %reportName)
         logger.info("%s has been unregistered."%reportName)
 
@@ -214,7 +216,7 @@ def unregister_custom_reports():
 def update_custom_reports():
     logger.debug("Entering update_custom_reports")
 
-    response = common.api.reports.get_reports.get_all_currently_registered_reports_by_name(baseURL, adminAuthToken, reportName)
+    response = reports.get_reports.get_all_currently_registered_reports_by_name(baseURL, adminAuthToken, reportName)
 
     if "error" in response:
         if "Total records :0 number of pages :0" in response["error"]:
@@ -234,7 +236,7 @@ def update_custom_reports():
     logger.info("Attempting to update %s with a report id of %s" %(reportName, reportID))
     print("Attempting to update %s with a report id of %s" %(reportName, reportID))
 
-    response = common.api.reports.update_report.update_custom_report(reportName, reportPath, reportID, reportOrder, enableProjectPickerValue, reportOptions, baseURL, adminAuthToken)
+    response = reports.update_report.update_custom_report(reportName, reportPath, reportID, reportOrder, enableProjectPickerValue, reportOptions, baseURL, adminAuthToken)
 
     if "error" in response:
         if "Unrecognized field" in response["error"]:
