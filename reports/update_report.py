@@ -50,7 +50,7 @@ def update_custom_report(reportName, reportPath, reportID, reportOrder, enablePr
     ##########################################################################   
     # Make the REST API call with the project data           
     try:
-        response = requests.put(RESTAPI_URL, headers=headers, data=createReportBody)
+        response = requests.put(RESTAPI_URL, headers=headers, data=createReportBody, verify=False)
     except requests.exceptions.RequestException as error:  # Just catch all errors
         logger.error(error)
         return {"error" : error}
