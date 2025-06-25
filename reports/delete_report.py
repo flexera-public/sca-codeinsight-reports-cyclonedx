@@ -26,7 +26,7 @@ def unregister_report_by_id(baseURL, authToken, reportId):
     ##########################################################################   
     # Make the REST API call with the project data           
     try:
-        response = requests.delete(RESTAPI_URL, headers=headers)
+        response = requests.delete(RESTAPI_URL, headers=headers, verify=False)
     except requests.exceptions.RequestException as error:  # Just catch all errors
         logger.error(error)
         return {"error": error}
