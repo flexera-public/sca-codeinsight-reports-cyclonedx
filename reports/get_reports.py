@@ -44,7 +44,7 @@ def get_currently_registered_reports(baseURL, authToken, APIOPTIONS):
     ##########################################################################   
     # Make the REST API call with the project data           
     try:
-        response = requests.get(RESTAPI_URL, headers=headers)
+        response = requests.get(RESTAPI_URL, headers=headers, verify=False)
     except requests.exceptions.RequestException as error:  # Just catch all errors
         logger.error(error)
         return {"error" : error}
