@@ -17,6 +17,9 @@ The `sca-codeinsight-reports-cyclonedx` repository provides a report for Revener
 
 This repository should be cloned directly into the **$CODEINSIGHT_INSTALLDIR/custom_report_scripts** directory. If no prior custom reports has been installed, this directory will need to be created prior to cloning.
 
+### Java Requirements
+To query data from the Code Insight database, the `<Install Location>\samples\customreport_helper\DBConnection.jar` file is required. Java is needed to run this JAR. You can specify the Java path in the `user_java_path` variable within `report_data_db.py`. If this variable is not set, the script will look for the `JAVA_HOME` environment variable. If neither is found, it will default to the Code Insight JRE located at `<Install Location>\jre`.
+
 ### Python Requirements
 
 This repository requires the Requests module to interact with the Code Insight API's. Install the dependencies using the following command:
