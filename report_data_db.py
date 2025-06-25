@@ -19,8 +19,22 @@ from packaging.version import parse as parse_version
 logger = logging.getLogger(__name__)
 
 
+# User can set this variable directly in code
+user_java_path = ""
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Determine the correct Java executable name
+java_exec = "java.exe" if os.name == "nt" else "java"
+DEFAULT_JAVA_PATH = os.path.abspath(os.path.join(BASE_DIR, '..', '..', 'jre', 'bin', java_exec))
+# Check JAVA_HOME and construct the java path
+java_home = os.environ.get('JAVA_HOME')
+if user_java_path != "":
+    JAVA_PATH = user_java_path
+elif java_home:
+    JAVA_PATH = os.path.join(java_home, 'bin', java_exec)
+else:
+    JAVA_PATH = DEFAULT_JAVA_PATH
+print(f"Using Java path: {JAVA_PATH}")  # Debugging line to check the Java path
 JAR_PATH = os.path.join(BASE_DIR, '..', '..', 'samples', 'customreport_helper', 'DbConnection.jar')
 properties_file = os.path.join(BASE_DIR, '..', '..', 'config', 'core', 'core.db.properties')
 
@@ -36,7 +50,7 @@ if not os.path.exists(JAR_PATH):
     sys.exit(error_msg)
 
 class InteractiveDbQueryRunner:
-    def __init__(self, jar_path):
+    def __init__(self, jar_path, java_path=JAVA_PATH):
         self.proc = subprocess.Popen(
             ["java", "-jar", jar_path],
             stdin=subprocess.PIPE,
@@ -79,7 +93,7 @@ class InteractiveDbQueryRunner:
             except Exception as e:
                 logger.warning(f"Error terminating Java process: {e}")
             self.proc = None
-db_runner = InteractiveDbQueryRunner(JAR_PATH)
+db_runner = InteractiveDbQueryRunner(JAR_PATH, JAVA_PATH)
 
 
 def get_db_vendor():
@@ -231,7 +245,5 @@ def get_custom_field_value(inventory_id, field_label="Archive Property"):
         logger.warning(f"No custom field value found for inventory ID: {inventory_id} and label: {field_label}")
         return "N/A"
 
-if __name__ == "__main__":
-    print(get_inventory_files(232, 4316))  # Example usage, replace with actual project_id and inventory_id
 
 
