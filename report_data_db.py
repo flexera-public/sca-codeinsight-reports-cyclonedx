@@ -34,6 +34,18 @@ elif java_home:
     JAVA_PATH = os.path.join(java_home, 'bin', java_exec)
 else:
     JAVA_PATH = DEFAULT_JAVA_PATH
+
+if not os.path.exists(JAVA_PATH):
+    error_msg = (
+        f"Java executable not found at: {JAVA_PATH}\n"
+        "Please ensure Java is installed and accessible. You can:\n"
+        "1. Set the JAVA_HOME environment variable to your Java installation directory\n"
+        "2. Manually set the 'user_java_path' variable in this file:\n"
+        f"   {os.path.abspath(__file__)}\n"
+        f"   Example: user_java_path = r'C:\\Program Files\\Java\\jdk-11\\bin\\{java_exec}'"
+    )
+    logger.error(error_msg)
+    sys.exit(error_msg)
 print(f"Using Java path: {JAVA_PATH}")  # Debugging line to check the Java path
 JAR_PATH = os.path.join(BASE_DIR, '..', '..', 'samples', 'customreport_helper', 'DbConnection.jar')
 properties_file = os.path.join(BASE_DIR, '..', '..', 'config', 'core', 'core.db.properties')
