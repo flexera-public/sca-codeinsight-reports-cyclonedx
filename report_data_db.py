@@ -63,15 +63,40 @@ if not os.path.exists(JAR_PATH):
 
 class InteractiveDbQueryRunner:
     def __init__(self, jar_path, java_path=JAVA_PATH):
-        self.proc = subprocess.Popen(
-            ["java", "-jar", jar_path],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-            bufsize=1
-        )
+        try:
+            # Get absolute path to properties file
+            abs_properties_path = os.path.abspath(properties_file)
+            logger.info(f"Starting Java process with: {java_path} -jar {jar_path} {abs_properties_path}")
+            
+            self.proc = subprocess.Popen(
+                [java_path, "-jar", jar_path, abs_properties_path],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                bufsize=1
+            )
+            logger.info(f"Java process started with PID: {self.proc.pid}")
+            
+            # Check if process started successfully
+            import time
+            time.sleep(0.1)  # Give it a moment to start
+            if self.proc.poll() is not None:
+                stderr_output = self.proc.stderr.read() if self.proc.stderr else "No stderr available"
+                raise RuntimeError(f"Java process terminated immediately. Exit code: {self.proc.returncode}, stderr: {stderr_output}")
+                
+        except Exception as e:
+            logger.error(f"Failed to start Java process: {e}")
+            raise
+        
         self.lock = threading.Lock()
+        
+        # Try to set autocommit on
+        try:
+            self.run_query("SET autocommit = true;")
+            logger.info("Set database autocommit to true")
+        except Exception as e:
+            logger.warning(f"Could not set autocommit mode: {e}")
 
     def run_query(self, sql_query):
         with self.lock:
