@@ -74,6 +74,7 @@ def gather_data_for_report(projectID, reportData, reportOptions):
                 .encode("ASCII", "ignore")
                 .decode("utf-8")
             )
+            supplier = create_supplier_string(inventoryItem["forge"], componentName)
 
             # Is there a specified component version?
             if componentDescription == "N/A":
@@ -101,6 +102,15 @@ def gather_data_for_report(projectID, reportData, reportOptions):
                 bomref = purlString + "-" + str(inventoryID)
             else:
                 bomref = ""
+
+            # Collect the dependencies for the project
+            if inventoryItem["parentGroupId"] != None:
+                parentInvName = report_data_db.get_inventory_name(
+                    inventoryItem["parentGroupId"]
+                )
+                dependency={"ref": bomref, "dependsOn": [parentInvName]}
+            else:
+                dependency={"ref": bomref, "dependsOn": []}
 
             # Manage license details
             licenseDetails = {}
@@ -165,6 +175,8 @@ def gather_data_for_report(projectID, reportData, reportOptions):
                 "licenseDetails": licenseDetails,
                 "purl": purlString,
                 "bomref": bomref,
+                "componentSupplier": supplier,
+                "componentDependency": dependency
             }
 
             bomLink = (
@@ -291,9 +303,11 @@ def update_vulnerability_data(vulnerabilityData, vulnerability, projectName, bom
                 vulnerabilityMethod = vulnerabilityMethod.replace(".", "").replace(
                     ":", "v"
                 )
+                if vulnerabilityMethod in ("CVSSv30", "CVSSv40"):
+                    vulnerabilityMethod = vulnerabilityMethod[:-1]  # Remove the trailing zero
             else:
                 vulnerabilityVector = ""
-                vulnerabilityMethod = ""
+                vulnerabilityMethod = "other"
 
         if vulnerabilityVector == "N/A" or vulnerabilityVector is None:
             vulnerabilityVector = ""
@@ -337,3 +351,12 @@ def update_vulnerability_data(vulnerabilityData, vulnerability, projectName, bom
             vulnerabilityData[vulnerability["vulnerabilityName"]]["detail"] = (
                 vulnerability["detail"]
             )
+
+#-------------------------------------------------------
+def create_supplier_string(forge, componentName):
+    if forge is not None:
+        supplier = "Organization: %s:%s" %(forge, componentName)
+    else:
+        # Have a default value just in case one can't be created
+        supplier = "Organization: Undetermined" 
+    return supplier
