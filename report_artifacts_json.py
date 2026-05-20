@@ -51,6 +51,15 @@ def generate_json_report(reportData):
     reportDetails["metadata"]["component"]["type"] = "application"
     reportDetails["metadata"]["component"]["name"] = reportData["topLevelProjectName"]
 
+    safetyQualificationInput = reportData.get("safetyQualificationInput", "")
+    if safetyQualificationInput:
+        reportDetails["metadata"]["properties"] = [
+            {
+                "name": "safetyQualificationInput",
+                "value": safetyQualificationInput
+            }
+        ]
+
     reportDetails["components"] = []
     reportDetails["dependencies"] = []
 

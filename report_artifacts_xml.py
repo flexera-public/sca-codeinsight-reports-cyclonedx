@@ -57,6 +57,12 @@ def generate_cyclonedx_report(reportData):
     name = ET.SubElement(component, "name")
     version = ET.SubElement(component, "version")
 
+    safetyQualificationInput = reportData.get("safetyQualificationInput", "")
+    if safetyQualificationInput:
+        properties = ET.SubElement(metadata, "properties")
+        prop = ET.SubElement(properties, "property", name="safetyQualificationInput")
+        prop.text = safetyQualificationInput
+
     inventoryComponents = ET.SubElement(root, "components")
 
     for inventoryID in inventoryData:
@@ -128,10 +134,11 @@ def generate_vdr_report(reportData):
 
     reportFileNameBase = reportData["reportFileNameBase"]
     vulnerabilityData = reportData["vulnerabilityVdrData"]
+    specVersion = reportData["specVersion"]
 
     xmlVRDFile = reportFileNameBase.replace("CycloneDX", "VDR") + ".xml"
 
-    root = ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/1.6", version="1")
+    root = ET.Element("bom", xmlns="http://cyclonedx.org/schema/bom/" + specVersion, version="1")
     vulnerabilities = ET.SubElement(root, "vulnerabilities")
 
     for vulnerability in vulnerabilityData:
