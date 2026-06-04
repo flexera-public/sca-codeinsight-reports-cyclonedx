@@ -173,10 +173,10 @@ def get_projects_data(project_id):
 
 def get_project_safety_qualification_input(project_id):
     # Step 1: Get the custom field column name for the Safety Qualification Input label
-    sql_meta = "SELECT FIELD_NAME_ FROM PAS_PROJECT_CUSTOM_FIELDS_METADATA WHERE FIELD_LABEL_ = 'SAFETY_INPUT_';"
+    sql_meta = "SELECT FIELD_NAME_ FROM PAS_PROJECT_CUSTOM_FIELDS_METADATA WHERE FIELD_LABEL_ = 'Safety Input';"
     meta_result = db_runner.run_query(sql_meta)
     if not meta_result or not isinstance(meta_result, list) or len(meta_result) == 0 or not meta_result[0].get('FIELD_NAME_'):
-        logger.warning("No project custom field metadata found for 'SAFETY_INPUT_'")
+        logger.warning("No project custom field metadata found for 'Safety Input'")
         return ""
     field_name = meta_result[0]['FIELD_NAME_']
     # Step 2: Query the actual value using the dynamic column name
