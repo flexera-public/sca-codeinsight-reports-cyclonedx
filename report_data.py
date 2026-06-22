@@ -36,7 +36,7 @@ def gather_data_for_report(projectID, reportData, reportOptions):
     serialNumber = "urn:uuid:" + str(uuid.uuid1())
     bomFormat = "CycloneDX"
     bomVersion = "1"
-    specVersion = "1.6"
+    specVersion = "1.7"
     reportOptions = reportData["reportOptions"]
 
     if reportOptions["includeChildProjects"]:
