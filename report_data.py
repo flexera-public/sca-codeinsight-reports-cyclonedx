@@ -237,23 +237,27 @@ def gather_data_for_report(projectID, reportData, reportOptions):
     reportData["topLevelProjectName"] = project_Name
     reportData["safetyQualificationInput"] = report_data_db.get_project_safety_qualification_input(topLevelProjectID)
 
-    # Validate safety fields: safety_critical and safety_adjacent components MUST have a Safety Analysis Reference
-    VALID_SAFETY_CLASSES = {"safety_critical", "safety_adjacent"}
+    # Validate safety fields per the following rules:
+    # 1. Allowed Safety Relevance Class values: safety_critical, safety_adjacent, non_safety
+    # 2. safety_critical and safety_adjacent REQUIRE a Safety Analysis Reference
+    # 3. non_safety components may leave Safety Analysis Reference blank
+    ALLOWED_SAFETY_CLASSES = {"safety_critical", "safety_adjacent", "non_safety"}
+    REQUIRES_ANALYSIS_REF = {"safety_critical", "safety_adjacent"}
     safety_validation_errors = []
     for invID, invItem in sortedInventoryData.items():
         src = invItem.get("safetyRelevanceClass", "")
         sar = invItem.get("safetyAnalysisReference", "")
-        if src in VALID_SAFETY_CLASSES and not sar:
-            safety_validation_errors.append(
-                f"Component '{invItem['componentName']} {invItem['componentVersionName']}' "
-                f"(Inventory ID: {invID}) has Safety Relevance Class '{src}' "
-                f"but no Safety Analysis Reference is provided."
-            )
-        elif src and src not in VALID_SAFETY_CLASSES and src != "non_safety":
+        if src and src not in ALLOWED_SAFETY_CLASSES:
             safety_validation_errors.append(
                 f"Component '{invItem['componentName']} {invItem['componentVersionName']}' "
                 f"(Inventory ID: {invID}) has invalid Safety Relevance Class value '{src}'. "
                 f"Allowed values are: safety_critical, safety_adjacent, non_safety."
+            )
+        elif src in REQUIRES_ANALYSIS_REF and not sar:
+            safety_validation_errors.append(
+                f"Component '{invItem['componentName']} {invItem['componentVersionName']}' "
+                f"(Inventory ID: {invID}) has Safety Relevance Class '{src}' "
+                f"but no Safety Analysis Reference is provided."
             )
 
     if safety_validation_errors:
