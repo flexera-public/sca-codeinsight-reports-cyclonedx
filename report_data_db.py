@@ -171,23 +171,6 @@ def get_projects_data(project_id):
         logger.warning(f"No project found for ID {project_id}")
         return None
 
-def get_project_safety_qualification_input(project_id):
-    # Step 1: Get the custom field column name for the Safety Qualification Input label
-    sql_meta = "SELECT FIELD_NAME_ FROM PAS_PROJECT_CUSTOM_FIELDS_METADATA WHERE FIELD_LABEL_ = 'Safety Input';"
-    meta_result = db_runner.run_query(sql_meta)
-    if not meta_result or not isinstance(meta_result, list) or len(meta_result) == 0 or not meta_result[0].get('FIELD_NAME_'):
-        logger.warning("No project custom field metadata found for 'Safety Input'")
-        return ""
-    field_name = meta_result[0]['FIELD_NAME_']
-    # Step 2: Query the actual value using the dynamic column name
-    sql_value = f"SELECT {field_name} AS safetyQualificationInput FROM PAS_PROJECT_CUSTOM_FIELDS WHERE PROJECT_ID_ = {project_id};"
-    result = db_runner.run_query(sql_value)
-    if result and isinstance(result, list) and len(result) > 0 and result[0].get('safetyQualificationInput'):
-        return result[0]['safetyQualificationInput']
-    else:
-        logger.warning(f"Safety qualification input not found for project ID {project_id}")
-        return ""
-
 def get_inventory_name(inventory_id):
     sql = f"SELECT NAME_ AS invName FROM PSE_INVENTORY_GROUPS WHERE ID_ = {inventory_id};"
     return db_runner.run_query(sql)

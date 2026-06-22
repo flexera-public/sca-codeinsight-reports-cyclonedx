@@ -227,7 +227,6 @@ def gather_data_for_report(projectID, reportData, reportOptions):
 
     # reportData["applicationDetails"] = applicationDetails
     reportData["topLevelProjectName"] = project_Name
-    reportData["safetyQualificationInput"] = report_data_db.get_project_safety_qualification_input(topLevelProjectID)
     reportData["bomVersion"] = bomVersion
     reportData["bomFormat"] = bomFormat
     reportData["specVersion"] = specVersion
