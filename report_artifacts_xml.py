@@ -57,6 +57,12 @@ def generate_cyclonedx_report(reportData):
     name = ET.SubElement(component, "name")
     version = ET.SubElement(component, "version")
 
+    safetyQualificationInput = reportData.get("safetyQualificationInput", "")
+    if safetyQualificationInput:
+        properties = ET.SubElement(metadata, "properties")
+        prop = ET.SubElement(properties, "property", name="safetyQualificationInput")
+        prop.text = safetyQualificationInput
+
     inventoryComponents = ET.SubElement(root, "components")
 
     for inventoryID in inventoryData:

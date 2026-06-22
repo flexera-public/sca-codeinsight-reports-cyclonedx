@@ -45,6 +45,8 @@ def gather_data_for_report(projectID, reportData, reportOptions):
         projectList = []
         projectList.append(projectID)
 
+    topLevelProjectID = projectList[0]
+
     for projectID in projectList:
         project_Name = report_data_db.get_projects_data(projectID)
         inventoryItems = report_data_db.get_inventory_data(projectID)
@@ -225,6 +227,7 @@ def gather_data_for_report(projectID, reportData, reportOptions):
 
     # reportData["applicationDetails"] = applicationDetails
     reportData["topLevelProjectName"] = project_Name
+    reportData["safetyQualificationInput"] = report_data_db.get_project_safety_qualification_input(topLevelProjectID)
     reportData["bomVersion"] = bomVersion
     reportData["bomFormat"] = bomFormat
     reportData["specVersion"] = specVersion
