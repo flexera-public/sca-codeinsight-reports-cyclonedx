@@ -167,6 +167,11 @@ def gather_data_for_report(projectID, reportData, reportOptions):
                 licenseDetails["licenseName"] = selectedLicenseName
                 licenseDetails["licenseURL"] = selectedLicenseUrl
 
+            # Fetch inventory-level safety custom fields
+            safetyRelevanceClass = report_data_db.get_custom_field_value(inventoryID, "Safety Relevance Class")
+            safetyAnalysisReference = report_data_db.get_custom_field_value(inventoryID, "Safety Analysis Reference")
+            componentOwner = report_data_db.get_custom_field_value(inventoryID, "Component Owner")
+
             # Store the data for the inventory item for reporting
             inventoryData[inventoryID] = {
                 "projectName": project_Name,
@@ -178,7 +183,10 @@ def gather_data_for_report(projectID, reportData, reportOptions):
                 "purl": purlString,
                 "bomref": bomref,
                 "componentSupplier": supplier,
-                "componentDependency": dependency
+                "componentDependency": dependency,
+                "safetyRelevanceClass": safetyRelevanceClass if safetyRelevanceClass != "N/A" else "",
+                "safetyAnalysisReference": safetyAnalysisReference if safetyAnalysisReference != "N/A" else "",
+                "componentOwner": componentOwner if componentOwner != "N/A" else "",
             }
 
             bomLink = (
@@ -228,6 +236,29 @@ def gather_data_for_report(projectID, reportData, reportOptions):
     # reportData["applicationDetails"] = applicationDetails
     reportData["topLevelProjectName"] = project_Name
     reportData["safetyQualificationInput"] = report_data_db.get_project_safety_qualification_input(topLevelProjectID)
+
+    # Validate safety fields: safety_critical and safety_adjacent components MUST have a Safety Analysis Reference
+    VALID_SAFETY_CLASSES = {"safety_critical", "safety_adjacent"}
+    safety_validation_errors = []
+    for invID, invItem in sortedInventoryData.items():
+        src = invItem.get("safetyRelevanceClass", "")
+        sar = invItem.get("safetyAnalysisReference", "")
+        if src in VALID_SAFETY_CLASSES and not sar:
+            safety_validation_errors.append(
+                f"Component '{invItem['componentName']} {invItem['componentVersionName']}' "
+                f"(Inventory ID: {invID}) has Safety Relevance Class '{src}' "
+                f"but no Safety Analysis Reference is provided."
+            )
+        elif src and src not in VALID_SAFETY_CLASSES and src != "non_safety":
+            safety_validation_errors.append(
+                f"Component '{invItem['componentName']} {invItem['componentVersionName']}' "
+                f"(Inventory ID: {invID}) has invalid Safety Relevance Class value '{src}'. "
+                f"Allowed values are: safety_critical, safety_adjacent, non_safety."
+            )
+
+    if safety_validation_errors:
+        reportData["errorMsg"] = safety_validation_errors
+
     reportData["bomVersion"] = bomVersion
     reportData["bomFormat"] = bomFormat
     reportData["specVersion"] = specVersion

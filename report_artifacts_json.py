@@ -86,6 +86,9 @@ def generate_json_report(reportData):
         purl = inventoryData[inventoryID]["purl"]
         componentSupplier = inventoryData[inventoryID]["componentSupplier"]
         componentDependency = inventoryData[inventoryID]["componentDependency"]
+        safetyRelevanceClass = inventoryData[inventoryID].get("safetyRelevanceClass", "")
+        safetyAnalysisReference = inventoryData[inventoryID].get("safetyAnalysisReference", "")
+        componentOwner = inventoryData[inventoryID].get("componentOwner", "")
 
 
         component = {}
@@ -134,6 +137,17 @@ def generate_json_report(reportData):
         externalReference["type"] = "website"
         externalReference["url"] = componentUrl
         component["externalReferences"].append(externalReference)
+
+        # Add safety custom field properties (CycloneDX 1.7 component-level properties)
+        component_properties = []
+        if safetyRelevanceClass:
+            component_properties.append({"name": "Safety Relevance Class", "value": safetyRelevanceClass})
+        if safetyAnalysisReference:
+            component_properties.append({"name": "Safety Analysis Reference", "value": safetyAnalysisReference})
+        if componentOwner:
+            component_properties.append({"name": "Component Owner", "value": componentOwner})
+        if component_properties:
+            component["properties"] = component_properties
 
         reportDetails["components"].append(component)
 

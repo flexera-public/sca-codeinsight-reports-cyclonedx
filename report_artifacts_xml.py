@@ -74,6 +74,9 @@ def generate_cyclonedx_report(reportData):
         licenseDetails = inventoryData[inventoryID]["licenseDetails"]
         componentUrl = inventoryData[inventoryID]["componentUrl"]
         purl = inventoryData[inventoryID]["purl"]
+        safetyRelevanceClass = inventoryData[inventoryID].get("safetyRelevanceClass", "")
+        safetyAnalysisReference = inventoryData[inventoryID].get("safetyAnalysisReference", "")
+        componentOwner = inventoryData[inventoryID].get("componentOwner", "")
 
         cycloneDXEntry = ET.SubElement(inventoryComponents, "component", type="library")
 
@@ -119,6 +122,20 @@ def generate_cyclonedx_report(reportData):
         reference = ET.SubElement(externalReferences, "reference", type="website")
         url = ET.SubElement(reference, "url")
         url.text = componentUrl
+
+        # Add safety custom field properties (CycloneDX 1.7 component-level properties)
+        component_props = []
+        if safetyRelevanceClass:
+            component_props.append(("Safety Relevance Class", safetyRelevanceClass))
+        if safetyAnalysisReference:
+            component_props.append(("Safety Analysis Reference", safetyAnalysisReference))
+        if componentOwner:
+            component_props.append(("Component Owner", componentOwner))
+        if component_props:
+            compProperties = ET.SubElement(cycloneDXEntry, "properties")
+            for prop_name, prop_value in component_props:
+                prop = ET.SubElement(compProperties, "property", name=prop_name)
+                prop.text = prop_value
 
     xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent="   ")
     with open(xmlFile, "w", encoding="utf-8") as f:

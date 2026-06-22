@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - CycloneDX 1.7 Specification support
 - Added project custom field: safetyQualificationInput
+- Added inventory-level component properties: Safety Relevance Class, Safety Analysis Reference, Component Owner
+- Added validation: components with safety_critical or safety_adjacent class require a Safety Analysis Reference
 
 ## [1.6.0] - 2025-03-02
 ### Changed
