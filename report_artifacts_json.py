@@ -126,6 +126,13 @@ def generate_json_report(reportData):
         externalReference["url"] = componentUrl
         component["externalReferences"].append(externalReference)
 
+        customFields = inventoryData[inventoryID].get("customFields", [])
+        if customFields:
+            component["properties"] = [
+                {"name": cf["label"], "value": cf["value"]}
+                for cf in customFields
+            ]
+
         reportDetails["components"].append(component)
 
     try:

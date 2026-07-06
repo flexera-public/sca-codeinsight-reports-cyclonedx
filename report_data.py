@@ -167,6 +167,9 @@ def gather_data_for_report(projectID, reportData, reportOptions):
                 licenseDetails["licenseName"] = selectedLicenseName
                 licenseDetails["licenseURL"] = selectedLicenseUrl
 
+            # Fetch all custom field values for this inventory item
+            customFields = report_data_db.get_all_custom_field_values(inventoryID)
+
             # Store the data for the inventory item for reporting
             inventoryData[inventoryID] = {
                 "projectName": project_Name,
@@ -178,7 +181,8 @@ def gather_data_for_report(projectID, reportData, reportOptions):
                 "purl": purlString,
                 "bomref": bomref,
                 "componentSupplier": supplier,
-                "componentDependency": dependency
+                "componentDependency": dependency,
+                "customFields": customFields
             }
 
             bomLink = (

@@ -265,6 +265,29 @@ def get_inventory_files(project_id, inventory_id):
     sql = f"SELECT SCAN_FILE.PATH_ AS filePath, SCAN_FILE.MD5_ AS md5, SCAN_FILE.SHA1_ AS sha1 FROM PSE_INVENTORY_GROUP_FILES GRP_FILES JOIN PSE_SCANNED_FILES SCAN_FILE ON SCAN_FILE.ID_ = GRP_FILES.FILE_ID_  where PROJECT_ID_={project_id} and GRP_FILES.GROUP_ID_={inventory_id};"
     return db_runner.run_query(sql)
 
+def get_all_custom_field_values(inventory_id):
+    # Step 1: Fetch all field metadata (every label and its column name)
+    sql_meta = "SELECT FIELD_NAME_, FIELD_LABEL_ FROM PAS_INVENTORY_FLEX_FIELDS_METADATA;"
+    meta_result = db_runner.run_query(sql_meta)
+    if not meta_result or not isinstance(meta_result, list) or len(meta_result) == 0:
+        logger.warning("No custom field metadata found in PAS_INVENTORY_FLEX_FIELDS_METADATA")
+        return []
+    # Step 2: Query each field individually to avoid multi-column result parsing issues
+    custom_fields = []
+    for meta in meta_result:
+        field_name = meta.get('FIELD_NAME_')
+        label = meta.get('FIELD_LABEL_')
+        if not field_name or not label:
+            continue
+        sql_value = f"SELECT {field_name} AS FieldValue FROM PAS_INVENTORY_FLEX_FIELDS WHERE INVENTORY_ID_ = {inventory_id};"
+        result = db_runner.run_query(sql_value)
+        if result and isinstance(result, list) and len(result) > 0:
+            value = result[0].get('FieldValue')
+            if value is not None and str(value).strip():
+                custom_fields.append({"label": label, "value": str(value)})
+    return custom_fields
+
+
 def get_custom_field_value(inventory_id, field_label="Archive Property"):
     # Step 1: Get the custom field column name for the given label
     sql_meta = f"SELECT FIELD_NAME_ FROM PAS_INVENTORY_FLEX_FIELDS_METADATA WHERE FIELD_LABEL_ = '{field_label}';"
