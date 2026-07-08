@@ -114,6 +114,13 @@ def generate_cyclonedx_report(reportData):
         url = ET.SubElement(reference, "url")
         url.text = componentUrl
 
+        customFields = inventoryData[inventoryID].get("customFields", [])
+        if customFields:
+            propertiesElem = ET.SubElement(cycloneDXEntry, "properties")
+            for cf in customFields:
+                prop = ET.SubElement(propertiesElem, "property", name=cf["label"])
+                prop.text = cf["value"]
+
     xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent="   ")
     with open(xmlFile, "w", encoding="utf-8") as f:
         f.write(xmlstr)
