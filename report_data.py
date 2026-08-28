@@ -117,24 +117,30 @@ def gather_data_for_report(projectID, reportData, reportOptions):
             # Manage license details
             licenseDetails = {}
 
-            selectedLicenseSPDXIdentifier = inventoryItem[
-                "selectedLicenseSPDXIdentifier"
-            ]
+            # If the inventory item has a resolved license expression (numeric IDs
+            # already substituted with SPDX identifiers by _resolve_license_expressions
+            # in report_data_db.py), use it directly as a CycloneDX <expression>.
+            # This mirrors the same pattern used by the SPDX report.
+            # Fall through to the normal single-license logic when absent.
+            resolvedLicenseExpression = inventoryItem.get("resolvedLicenseExpression")
+
+            selectedLicenseSPDXIdentifier = inventoryItem["selectedLicenseSPDXIdentifier"]
             selectedLicenseName = inventoryItem["selectedLicenseName"]
             selectedLicenseUrl = inventoryItem["selectedLicenseUrl"]
 
-            if selectedLicenseName == "I don't know":
+            if resolvedLicenseExpression:
+                logger.info(
+                    f'        Using resolved license expression for inventory item {inventoryID}: "{resolvedLicenseExpression}"'
+                )
+                licenseDetails["licenseObjectType"] = "expression"
+                licenseDetails["licenseExpression"] = resolvedLicenseExpression
+
+            elif selectedLicenseName == "I don't know":
                 comp_license = report_data_db.get_comp_license(
                     inventoryItem["component_id"]
                 )
                 if comp_license:
-                    possibleLicensesOptions = [
-                        item["licenseName"] for item in comp_license
-                    ]
-                    possibleLicenses = []
-                    for license in possibleLicensesOptions:
-                        possibleLicenses.append(license)
-
+                    possibleLicenses = [item["licenseName"] for item in comp_license]
                     licenseDetails["licenseObjectType"] = "expression"
                     licenseDetails["possibleLicenses"] = " OR ".join(possibleLicenses)
                 else:
@@ -150,9 +156,7 @@ def gather_data_for_report(projectID, reportData, reportOptions):
                     '        "%s" maps to SPDX ID "%s"'
                     % (
                         selectedLicenseSPDXIdentifier,
-                        SPDX_license_mappings.LICENSEMAPPINGS[
-                            selectedLicenseSPDXIdentifier
-                        ],
+                        SPDX_license_mappings.LICENSEMAPPINGS[selectedLicenseSPDXIdentifier],
                     )
                 )
                 licenseDetails["licenseObjectType"] = "license"
@@ -162,7 +166,7 @@ def gather_data_for_report(projectID, reportData, reportOptions):
                 licenseDetails["licenseURL"] = selectedLicenseUrl
 
             else:
-                # There is not a valid SPDX ID here
+                # No valid SPDX ID — use the license name as-is
                 licenseDetails["licenseObjectType"] = "license"
                 licenseDetails["licenseName"] = selectedLicenseName
                 licenseDetails["licenseURL"] = selectedLicenseUrl

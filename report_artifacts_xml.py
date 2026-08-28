@@ -90,7 +90,11 @@ def generate_cyclonedx_report(reportData):
         if licenseDetails["licenseObjectType"] == "expression":
 
             expression = ET.SubElement(licenses, "expression")
-            expression.text = licenseDetails["possibleLicenses"]
+            # Use licenseExpression if available, otherwise fall back to possibleLicenses
+            if "licenseExpression" in licenseDetails:
+                expression.text = licenseDetails["licenseExpression"]
+            else:
+                expression.text = licenseDetails["possibleLicenses"]
 
         else:
             license = ET.SubElement(licenses, "license")
