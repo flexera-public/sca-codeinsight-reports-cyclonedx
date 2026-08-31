@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed PDL_LICENSE join from INNER JOIN to LEFT JOIN in get_inventory_data() and get_inventory_data_custom(). Inventory items whose license is set via a license expression only (LICENSE_ID_ is NULL) were being silently excluded from the entire report because the INNER JOIN on PDL_LICENSE filtered them out before license expression support was added.
 - Made license field lookups in report_data.py null-safe (.get() instead of direct indexing) to avoid KeyError now that PDL_LICENSE/PSE_LICENSE_EXPRESSION are LEFT JOINed and either side may be NULL.
 
+## [1.7.3] - 2026-08-31
+### Added
+- CVSSv4 vulnerabilty score
+### Fixed
+- added missing XML report 
+
 ## [1.7.2] - 2026-08-28
 ### Changed
 - Inclusion of License Expression

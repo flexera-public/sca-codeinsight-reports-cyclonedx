@@ -27,7 +27,7 @@ def create_report_artifacts(reportData, reportOptions):
     xmlFile = report_artifacts_xml.generate_cyclonedx_report(reportData)
 
     reports["viewable"] = jsonFile
-    reports["allFormats"] = [jsonFile]
+    reports["allFormats"] = [jsonFile, xmlFile]
 
     if reportOptions["includeVDRReport"]:
         vdrFile = report_artifacts_xml.generate_vdr_report(reportData)

@@ -251,6 +251,18 @@ def gather_data_for_report(projectID, reportData, reportOptions):
 # ------------------------------------------------#
 
 
+def parse_cvss_vector(vector):
+    if vector != None:
+        vulnerabilityMethod, vulnerabilityVector = vector.split("/", 1)
+        vulnerabilityMethod = vulnerabilityMethod.replace(".", "").replace(":", "v")
+        if vulnerabilityMethod in ("CVSSv30", "CVSSv40"):
+            vulnerabilityMethod = vulnerabilityMethod[:-1]  # Remove the trailing zero
+    else:
+        vulnerabilityVector = ""
+        vulnerabilityMethod = "other"
+    return vulnerabilityMethod, vulnerabilityVector
+
+
 def update_vulnerability_data(vulnerabilityData, vulnerability, projectName, bomLink):
     vulnerabilityName = vulnerability["vulnerabilityName"]
 
@@ -292,35 +304,38 @@ def update_vulnerability_data(vulnerabilityData, vulnerability, projectName, bom
         else:
             vulnerabilityData[vulnerabilityName]["vulnerabilityCWE"] = []
 
-        # Default to CVSSv3 data but use v2 if v3 data not accessible
-        vulnerabilityScore = vulnerability["vulnerabilityCvssV3Score"]
+        # Default to CVSSv4 data, falling back to v3 then v2 if higher version data not accessible
+        vulnerabilityScoreV4 = vulnerability["vulnerabilityCvssV4Score"]
+        if isinstance(vulnerabilityScoreV4, Decimal):
+            vulnerabilityScoreV4 = str(vulnerabilityScoreV4)
 
-        # Convert Decimal to string if necessary
-        if isinstance(vulnerabilityScore, Decimal):
-            vulnerabilityScore = str(vulnerabilityScore)
+        vulnerabilityScoreV3 = vulnerability["vulnerabilityCvssV3Score"]
+        if isinstance(vulnerabilityScoreV3, Decimal):
+            vulnerabilityScoreV3 = str(vulnerabilityScoreV3)
 
-        if vulnerabilityScore == "N/A" or vulnerabilityScore == "0.0" or vulnerabilityScore == None:
+        if vulnerabilityScoreV4 not in ("N/A", "0.0", None):
+            vulnerabilitySeverity = vulnerability["vulnerabilityCvssV4Severity"]
+            vulnerabilityScore = vulnerabilityScoreV4
+            vulnerabilityMethod, vulnerabilityVector = parse_cvss_vector(
+                vulnerability["vulnerabilityCvssV4Vector"]
+            )
+        elif vulnerabilityScoreV3 not in ("N/A", "0.0", None):
+            vulnerabilitySeverity = vulnerability["vulnerabilityCvssV3Severity"]
+            vulnerabilityScore = vulnerabilityScoreV3
+            vulnerabilityMethod, vulnerabilityVector = parse_cvss_vector(
+                vulnerability["vulnerabilityCvssV3Vector"]
+            )
+        else:
             vulnerabilitySeverity = vulnerability["vulnerabilityCvssV2Severity"]
             vulnerabilityScore = vulnerability["vulnerabilityCvssV2Score"]
             vulnerabilityVector = vulnerability["vulnerabilityCvssV2Vector"]
             vulnerabilityMethod = "CVSSv2"
-        else:
-            vulnerabilitySeverity = vulnerability["vulnerabilityCvssV3Severity"]
-            if vulnerability["vulnerabilityCvssV3Vector"] != None:
-                vulnerabilityMethod, vulnerabilityVector = vulnerability[
-                    "vulnerabilityCvssV3Vector"
-                ].split("/", 1)
-                vulnerabilityMethod = vulnerabilityMethod.replace(".", "").replace(
-                    ":", "v"
-                )
-                if vulnerabilityMethod in ("CVSSv30", "CVSSv40"):
-                    vulnerabilityMethod = vulnerabilityMethod[:-1]  # Remove the trailing zero
-            else:
-                vulnerabilityVector = ""
-                vulnerabilityMethod = "other"
 
         if vulnerabilityVector == "N/A" or vulnerabilityVector is None:
             vulnerabilityVector = ""
+
+        if vulnerabilitySeverity == "N/A" or vulnerabilitySeverity is None:
+            vulnerabilitySeverity = ""
 
         vulnerabilityData[vulnerabilityName][
             "vulnerabilitySeverity"
