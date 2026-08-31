@@ -93,7 +93,11 @@ def generate_json_report(reportData):
         license = {}
 
         if licenseDetails["licenseObjectType"] == "expression":
-            license["expression"] = licenseDetails["possibleLicenses"]
+            # Use licenseExpression if available, otherwise fall back to possibleLicenses
+            if "licenseExpression" in licenseDetails:
+                license["expression"] = licenseDetails["licenseExpression"]
+            else:
+                license["expression"] = licenseDetails["possibleLicenses"]
         else:
 
             license["license"] = {}

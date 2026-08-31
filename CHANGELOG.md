@@ -3,6 +3,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+### Added
+- Support for component version license expressions from PSE_LICENSE_EXPRESSION table
+- License expressions now take precedence over single license selections when available
+- Added LEFT JOIN to PSE_LICENSE_EXPRESSION in database queries
+- Enhanced license processing logic to prioritize license expressions
+- Fallback "NOASSERTION" license entry for inventory items with neither a single license nor a license expression, so they are still included in the report
+### Changed
+- Updated get_inventory_data() and get_inventory_data_custom() to fetch license expressions
+- Modified license handling in report_data.py to check for license expressions first
+- Updated XML and JSON report generation to use license expressions when available
+- Maintained backward compatibility with existing single-license inventory items
+### Fixed
+- Changed PDL_LICENSE join from INNER JOIN to LEFT JOIN in get_inventory_data() and get_inventory_data_custom(). Inventory items whose license is set via a license expression only (LICENSE_ID_ is NULL) were being silently excluded from the entire report because the INNER JOIN on PDL_LICENSE filtered them out before license expression support was added.
+- Made license field lookups in report_data.py null-safe (.get() instead of direct indexing) to avoid KeyError now that PDL_LICENSE/PSE_LICENSE_EXPRESSION are LEFT JOINed and either side may be NULL.
+
+## [1.7.2] - 2026-08-28
+### Changed
+- Inclusion of License Expression
+
 ## [1.7.1] - 2026-07-06
 ### Changed
 - Incoporated all Inventory Custom Fields
