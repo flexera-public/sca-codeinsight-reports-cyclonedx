@@ -91,6 +91,10 @@ class InteractiveDbQueryRunner:
             raise
         
         self.lock = threading.Lock()
+
+        # Continuously drain stderr so the OS pipe buffer never fills and blocks the Java process
+        self._stderr_thread = threading.Thread(target=self._drain_stderr, daemon=True)
+        self._stderr_thread.start()
         
         # Try to set autocommit on
         try:
@@ -98,6 +102,14 @@ class InteractiveDbQueryRunner:
             logger.info("Set database autocommit to true")
         except Exception as e:
             logger.warning(f"Could not set autocommit mode: {e}")
+
+    def _drain_stderr(self):
+        try:
+            for line in iter(self.proc.stderr.readline, ""):
+                if line:
+                    logger.debug("Java process stderr: %s", line.rstrip())
+        except (ValueError, OSError):
+            pass  # stream closed during shutdown
 
     def run_query(self, sql_query):
         with self.lock:
@@ -127,9 +139,20 @@ class InteractiveDbQueryRunner:
             except Exception as e:
                 logger.warning(f"Error sending exit to Java process: {e}")
             try:
-                self.proc.terminate()
+                self.proc.wait(timeout=5)  # Grace period to act on the exit command above
+            except subprocess.TimeoutExpired:
+                logger.warning("Java process did not exit gracefully; terminating")
+                try:
+                    self.proc.terminate()
+                    self.proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    logger.warning("Java process did not terminate; killing")
+                    self.proc.kill()
+                    self.proc.wait()
+                except Exception as e:
+                    logger.warning(f"Error terminating Java process: {e}")
             except Exception as e:
-                logger.warning(f"Error terminating Java process: {e}")
+                logger.warning(f"Error waiting for Java process to exit: {e}")
             self.proc = None
 db_runner = InteractiveDbQueryRunner(JAR_PATH, JAVA_PATH)
 

@@ -23,14 +23,15 @@ def upload_project_report_data(baseURL, projectID, reportID, authToken, uploadZi
     logger.debug("    RESTAPI_URL: %s" %RESTAPI_URL)
     
     formOptions = {'projectId': str(projectID),'reportId': str(reportID)}
-    files = [ ('file', open(uploadZipflle,'rb')) ]
 
     headers = {'Authorization': 'Bearer ' + authToken}  
        
     ##########################################################################   
     # Make the REST API call with the project data           
     try:
-        response = requests.post(RESTAPI_URL, headers=headers, data=formOptions, files=files)
+        with open(uploadZipflle, 'rb') as uploadFile:
+            files = [ ('file', uploadFile) ]
+            response = requests.post(RESTAPI_URL, headers=headers, data=formOptions, files=files)
     except requests.exceptions.RequestException as error:  # Just catch all errors
         logger.error(error)
         return

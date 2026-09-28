@@ -19,16 +19,14 @@ def create_report_zipfile(reportOutputs, reportFileNameBase):
     allFormatZipFile = reportFileNameBase + ".zip"
 
     # create a ZipFile object
-    allFormatsZip = zipfile.ZipFile(allFormatZipFile, 'w', zipfile.ZIP_DEFLATED)
-
     logger.debug("    Create downloadable archive: %s" %allFormatZipFile)
     print("        Create downloadable archive: %s" %allFormatZipFile)
-    for format in reportOutputs["allFormats"]:
-        print("            Adding %s to zip" %format)
-        logger.debug("    Adding %s to zip" %format)
-        allFormatsZip.write(format)
+    with zipfile.ZipFile(allFormatZipFile, 'w', zipfile.ZIP_DEFLATED) as allFormatsZip:
+        for format in reportOutputs["allFormats"]:
+            print("            Adding %s to zip" %format)
+            logger.debug("    Adding %s to zip" %format)
+            allFormatsZip.write(format)
 
-    allFormatsZip.close()
     logger.debug(    "Downloadable archive created")
     print("        Downloadable archive created")
 
@@ -36,10 +34,9 @@ def create_report_zipfile(reportOutputs, reportFileNameBase):
     uploadZipflle = allFormatZipFile.replace(".zip", "_upload.zip")
     print("        Create zip archive containing viewable and downloadable archive for upload: %s" %uploadZipflle)
     logger.debug("    Create zip archive containing viewable and downloadable archive for upload: %s" %uploadZipflle)
-    zipToUpload = zipfile.ZipFile(uploadZipflle, 'w', zipfile.ZIP_DEFLATED)
-    zipToUpload.write(reportOutputs["viewable"])
-    zipToUpload.write(allFormatZipFile)
-    zipToUpload.close()
+    with zipfile.ZipFile(uploadZipflle, 'w', zipfile.ZIP_DEFLATED) as zipToUpload:
+        zipToUpload.write(reportOutputs["viewable"])
+        zipToUpload.write(allFormatZipFile)
     logger.debug("    Archive zip file for upload has been created")
     print("        Archive zip file for upload has been created")
 

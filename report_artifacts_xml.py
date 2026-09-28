@@ -16,6 +16,17 @@ logger = logging.getLogger(__name__)
 
 
 # ------------------------------------------------------------------#
+def _serialize_pretty_xml(root, indent="   "):
+    """Pretty-print the ElementTree in place instead of re-parsing it into a second (minidom) tree."""
+    try:
+        ET.indent(root, space=indent)
+        return '<?xml version="1.0" ?>\n' + ET.tostring(root, encoding="unicode") + "\n"
+    except AttributeError:
+        # ET.indent() requires Python 3.9+; fall back to the minidom round-trip on older runtimes
+        return minidom.parseString(ET.tostring(root)).toprettyxml(indent=indent)
+
+
+# ------------------------------------------------------------------#
 def generate_cyclonedx_report(reportData):
     logger.info("    Entering generate_cyclonedx_report")
 
@@ -125,7 +136,7 @@ def generate_cyclonedx_report(reportData):
                 prop = ET.SubElement(propertiesElem, "property", name=cf["label"])
                 prop.text = cf["value"]
 
-    xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent="   ")
+    xmlstr = _serialize_pretty_xml(root)
     with open(xmlFile, "w", encoding="utf-8") as f:
         f.write(xmlstr)
 
@@ -205,7 +216,7 @@ def generate_vdr_report(reportData):
             )
             vulnerabilityAffectsTargetRef.text = affectedComponent
 
-    xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent="   ")
+    xmlstr = _serialize_pretty_xml(root)
     with open(xmlVRDFile, "w", encoding="utf-8") as f:
         f.write(xmlstr)
 
@@ -301,7 +312,7 @@ def generate_vex_report(reportData):
             )
             vulnerabilityAffectsTargetRef.text = affectedComponent
 
-    xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent="   ")
+    xmlstr = _serialize_pretty_xml(root)
     with open(xmlVEXFile, "w", encoding="utf-8") as f:
         f.write(xmlstr)
 
