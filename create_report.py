@@ -189,12 +189,16 @@ def main():
 
         reports = report_errors.create_error_report(reportData)
         print("    *** ERROR  ***  Error found validating report options")
-    else:
-        reportData = report_data.gather_data_for_report(
-            projectID, reportData, reportOptions
-        )
-        print("    Report data has been collected")
         report_data_db.db_runner.close()
+    else:
+        try:
+            reportData = report_data.gather_data_for_report(
+                projectID, reportData, reportOptions
+            )
+            print("    Report data has been collected")
+        finally:
+            # Always release the DB helper subprocess, even if data gathering raises
+            report_data_db.db_runner.close()
         projectName = reportData["topLevelProjectName"]
         projectNameForFile = re.sub(
             r"[^a-zA-Z0-9]+", "-", projectName
